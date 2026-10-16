@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>翰林國語三上 全冊生字筆順練習教室</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700;900&display=swap" rel="stylesheet">
+
+  <style>
+    .font-moe {
+      font-family: "DFKai-SB", "BiauKai", "TW-Kai", "Noto Serif TC", serif !important;
+    }
+    .tianzige-container {
+      position: relative;
+      width: 380px;
+      height: 380px;
+      max-width: 100%;
+      background-color: #ffffff;
+      border: 3px solid #dc2626;
+      border-radius: 1rem;
+      overflow: hidden;
+      touch-action: none;
+      box-shadow: none !important;
+    }
+    .tianzige-grid {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+    #writer-target, #moe-view-target {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #moe-view-target {
+      display: none;
+    }
+    #writer-target svg, #moe-view-target svg {
+      display: block;
+      margin: 0 auto;
+    }
+    .horizontal-scroll::-webkit-scrollbar {
+      height: 6px;
+    }
+    .horizontal-scroll::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 9999px;
+    }
+    .horizontal-scroll::-webkit-scrollbar-thumb {
+      background: #94a3b8;
+      border-radius: 9999px;
+    }
+    * {
+      box-shadow: none !important;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col selection:bg-indigo-100 selection:text-indigo-800">
+  <!-- 頁首與課次選擇列 -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-indigo-900 text-white flex items-center justify-center font-serif text-2xl font-bold border border-indigo-950">
+          字
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-base sm:text-lg font-bold text-slate-900">翰林三上 生字筆順練習教室</h1>
+            <span class="text-xs bg-indigo-100 text-indigo-800 font-semibold px-2 py-0.5 rounded-full border border-indigo-200 hidden md:inline-block">翰林全冊176字</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2.5 flex-wrap">
+        <div class="flex items-center gap-1.5 bg-slate-100 rounded-xl p-1 border border-slate-200">
+          <span class="text-xs text-indigo-700 ml-1.5 font-bold">課次</span>
+          <select id="lesson-select" class="bg-transparent text-xs sm:text-sm font-semibold text-slate-700 py-1 pr-2 rounded-lg focus:outline-none cursor-pointer">
+          </select>
+        </div>
+
+        <button id="btn-read-character" class="text-xs sm:text-sm flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-indigo-700 text-white hover:bg-indigo-800 transition font-medium border border-indigo-800">
+          <span>🔊 讀生字</span>
+        </button>
+
+        <button id="btn-open-moe-newtab" title="複製字詞並開啟教育部首頁對照" class="text-xs sm:text-sm flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition font-medium border border-slate-300">
+          <span>🔗 教育部官網對照</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 橫向生字選擇膠囊列 -->
+    <div class="border-t border-slate-100 bg-slate-50 px-4 sm:px-6 py-2">
+      <div class="max-w-7xl mx-auto flex items-center gap-2">
+        <button id="btn-prev-char" title="上一個生字" class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 font-bold transition flex-shrink-0">
+          ◀
+        </button>
+
+        <div id="character-pills-container" class="flex-1 flex items-center gap-2 overflow-x-auto horizontal-scroll py-1 px-1 min-h-[46px]">
+        </div>
+
+        <button id="btn-next-char" title="下一個生字" class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 font-bold transition flex-shrink-0">
+          ▶
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 py-5 flex-1 w-full grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <!-- 左側：純田字格 -->
+    <section class="lg:col-span-7 flex flex-col items-center">
+      <div class="w-full max-w-[380px] flex items-center justify-between mb-2.5 p-1 bg-slate-200 rounded-xl text-xs font-semibold">
+        <button id="tab-hanzi-mode" class="flex-1 py-1.5 rounded-lg bg-white text-indigo-900 border border-slate-300 transition font-bold">
+          互動手寫模式
+        </button>
+        <button id="tab-moe-mode" class="flex-1 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition font-medium">
+          教育部標準筆順模式
+        </button>
+      </div>
+
+      <div class="w-full max-w-[380px] aspect-square relative mb-3.5 flex justify-center">
+        <div class="tianzige-container">
+          <svg class="tianzige-grid" viewBox="0 0 380 380" preserveAspectRatio="none">
+            <line x1="0" y1="190" x2="380" y2="190" stroke="#dc2626" stroke-width="1.8" stroke-dasharray="6,4" opacity="0.75" />
+            <line x1="190" y1="0" x2="190" y2="380" stroke="#dc2626" stroke-width="1.8" stroke-dasharray="6,4" opacity="0.75" />
+            <rect x="2" y="2" width="376" height="376" fill="none" stroke="#ef4444" stroke-width="2" opacity="0.35" />
+          </svg>
+
+          <div id="writer-target"></div>
+          <div id="moe-view-target"></div>
+        </div>
+      </div>
+
+      <div id="status-card" class="w-full max-w-[380px] mb-3.5 p-3 rounded-xl border transition-all duration-300 flex items-center justify-between bg-slate-100 border-slate-200 text-slate-700">
+        <div>
+          <p id="status-title" class="text-xs font-semibold text-slate-800">互動手寫模式</p>
+          <p id="status-message" class="text-xs text-slate-500">點擊「播放筆順」觀察運筆，或按「手寫測驗」在田字格描紅！</p>
+        </div>
+        <div id="stroke-counter-badge" class="hidden text-right flex-shrink-0 pl-2">
+          <span class="text-[10px] text-slate-400 block">筆畫進度</span>
+          <p id="stroke-progress-text" class="text-sm font-bold text-indigo-700 font-mono leading-none">0/0</p>
+        </div>
+      </div>
+
+      <div id="controls-hanzi" class="w-full max-w-[380px] space-y-2.5">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <button id="btn-animate" class="flex flex-col items-center justify-center p-2.5 rounded-xl bg-indigo-700 hover:bg-indigo-800 text-white font-medium transition active:scale-95">
+            <span class="text-base mb-0.5">▶</span>
+            <span class="text-xs">播放筆順</span>
+          </button>
+
+          <button id="btn-loop" class="flex flex-col items-center justify-center p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium border border-slate-300 transition active:scale-95">
+            <span class="text-base mb-0.5 text-indigo-700">🔁</span>
+            <span class="text-xs" id="btn-loop-text">循環播放</span>
+          </button>
+
+          <button id="btn-quiz" class="flex flex-col items-center justify-center p-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-medium transition active:scale-95">
+            <span class="text-base mb-0.5">✍️</span>
+            <span class="text-xs">手寫測驗</span>
+          </button>
+
+          <button id="btn-reset" class="flex flex-col items-center justify-center p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium border border-slate-300 transition active:scale-95">
+            <span class="text-base mb-0.5 text-slate-500">🔄</span>
+            <span class="text-xs">清空重設</span>
+          </button>
+        </div>
+
+        <div class="flex flex-wrap items-center justify-between gap-2 p-2 rounded-xl bg-white border border-slate-200 text-xs">
+          <button id="btn-toggle-outline" class="flex items-center gap-1 px-3 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition font-medium border border-slate-300">
+            <span id="text-toggle-outline">隱藏底字</span>
+          </button>
+
+          <div class="flex items-center gap-1">
+            <span class="text-slate-400 mr-1 text-[11px] font-medium">速度：</span>
+            <button class="speed-btn px-2 py-0.5 rounded-md text-xs font-medium border border-slate-200 hover:bg-slate-50 text-slate-600 transition" data-speed="0.6">慢 (0.6x)</button>
+            <button class="speed-btn px-2 py-0.5 rounded-md text-xs font-medium bg-indigo-50 border border-indigo-300 text-indigo-800 transition" data-speed="1.0">標準 (1.0x)</button>
+            <button class="speed-btn px-2 py-0.5 rounded-md text-xs font-medium border border-slate-200 hover:bg-slate-50 text-slate-600 transition" data-speed="1.6">快 (1.6x)</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="controls-moe" class="w-full max-w-[380px] hidden space-y-2.5">
+        <div class="grid grid-cols-3 gap-2">
+          <button id="btn-moe-play" class="flex items-center justify-center gap-1 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-medium text-xs transition active:scale-95">
+            <span>▶ 播放全字</span>
+          </button>
+          <button id="btn-moe-step" class="flex items-center justify-center gap-1 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 font-medium text-xs transition active:scale-95">
+            <span id="btn-moe-step-text">⏭ 分步下一筆</span>
+          </button>
+          <button id="btn-moe-reset" class="flex items-center justify-center gap-1 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 font-medium text-xs transition active:scale-95">
+            <span>🔄 重設</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 右側：字卡、直式注音、字義、延伸詞語、叮嚀 -->
+    <section class="lg:col-span-5 space-y-3.5">
+      <div class="bg-white rounded-2xl p-4.5 border border-slate-200 relative overflow-hidden">
+        <div class="absolute -right-5 -bottom-5 text-slate-100 font-serif text-9xl select-none pointer-events-none opacity-40" id="bg-char-watermark">
+          待
+        </div>
+
+        <div class="flex items-start gap-4">
+          <div id="char-display-badge" title="點擊聆聽發音" class="cursor-pointer group flex flex-col items-center justify-center w-24 h-24 rounded-2xl bg-indigo-50 border-2 border-indigo-200 text-indigo-950 hover:bg-indigo-100 transition-all flex-shrink-0">
+            <span id="detail-char" class="font-serif text-5xl font-black group-hover:scale-105 transition-transform">待</span>
+            <span class="text-[10px] text-indigo-700 flex items-center gap-0.5 mt-0.5 font-medium">
+              <span>🔊 臺灣女聲</span>
+            </span>
+          </div>
+
+          <div class="flex-1 space-y-2">
+            <div>
+              <div class="inline-flex items-center justify-center bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 min-h-[62px] min-w-[56px]">
+                <div id="detail-zhuyin" class="flex items-center justify-center">
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 pt-0.5">
+              <div class="bg-slate-50 rounded-xl p-2 border border-slate-200 text-center flex flex-col justify-center">
+                <span class="text-[10px] text-slate-500 block">課次</span>
+                <span id="detail-lesson-badge" class="text-sm font-bold text-indigo-800 font-serif">第一課</span>
+              </div>
+              <div class="bg-slate-50 rounded-xl p-2 border border-slate-200 text-center flex flex-col justify-center">
+                <span class="text-[10px] text-slate-500 block">版本</span>
+                <span class="text-sm font-bold text-amber-700 font-mono">翰林三上</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 1. 字義詮釋與課文理解 -->
+      <div class="bg-white rounded-2xl p-4 border border-slate-200 space-y-2">
+        <div class="flex items-center gap-2 text-teal-800 font-semibold text-xs sm:text-sm">
+          <span class="text-base">📖</span>
+          <span>字義詮釋與課文理解</span>
+        </div>
+        <p id="detail-char-meaning" class="text-xs sm:text-sm text-slate-700 leading-relaxed pl-6 font-serif">
+          停留以達到某種目的。如：「等待」、「期待」。課文中指耐心停留。
+        </p>
+      </div>
+
+      <!-- 2. 延伸詞語 -->
+      <div class="bg-white rounded-2xl p-4 border border-slate-200 space-y-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2 text-indigo-900 font-semibold text-xs sm:text-sm">
+            <span class="text-base">🏷️</span>
+            <span>延伸詞語（點擊查看解釋與發音）</span>
+          </div>
+          <span class="text-[10px] text-teal-700 bg-teal-50 border border-teal-200 px-2 py-0.5 rounded-full font-medium">教育部簡編本權威釋義</span>
+        </div>
+
+        <div id="word-detail-panel" class="hidden p-3.5 rounded-xl border border-teal-300 bg-teal-50/70 space-y-2 transition-all">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span id="panel-word-title" class="text-base font-bold text-teal-950 font-serif">等待</span>
+              <span class="text-[10px] bg-teal-800 text-white px-2 py-0.5 rounded-md font-medium">【教育部國語辭典簡編本】</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <button id="btn-panel-speak" class="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white border border-teal-300 text-teal-800 hover:bg-teal-100 text-xs font-semibold transition">
+                <span>🔊 發音</span>
+              </button>
+              <button id="btn-panel-close" class="px-2 py-0.5 rounded-lg text-slate-400 hover:text-slate-600 font-bold" title="關閉解釋">
+                ✕
+              </button>
+            </div>
+          </div>
+          <p id="panel-word-desc" class="text-xs sm:text-sm text-teal-950/90 leading-relaxed font-serif">
+            不採取行動，直到所期望的人、事、物出現。
+          </p>
+        </div>
+
+        <div id="detail-words-container" class="flex flex-wrap gap-2 pl-1 min-h-[38px]">
+        </div>
+      </div>
+
+      <!-- 3. 書寫小叮嚀 -->
+      <div class="bg-amber-50/70 rounded-2xl p-4 border border-amber-200 space-y-1.5">
+        <div class="flex items-center gap-2 text-amber-900 font-semibold text-xs sm:text-sm">
+          <span class="text-base">✏️</span>
+          <span>書寫小叮嚀（筆順與結構）</span>
+        </div>
+        <div class="text-xs sm:text-sm text-amber-950/90 leading-relaxed pl-6 font-sans" id="detail-tips">
+          依教育部常用國字標準字體筆順練習，注意各部件架構與起筆位置。
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const PRONUNCIATION_FIXES = {
+      "待": "岱",
+      "等待": "等岱",
+      "招待": "招岱",
+      "期待": "期岱",
+      "彈": "壇",
+      "彈簧": "壇簧",
+      "重疊": "蟲疊",
+      "折斷": "哲斷"
+    };
+
+    const LESSONS_DATABASE = [
+      {
+        id: 1,
+        title: "第一課",
+        characters: [
+          { char: "待", zhuyin: "ㄉㄞˋ", meaning: "停留以達到某種目的。如：「等待」、「期待」。課文中指耐心停留。", tip: "雙人旁立於左；右下寸字橫短豎鉤長，起筆注意平衡。", words: [{ word: "等待", desc: "不採取行動，直到所期望的人事物出現。" }, { word: "招待", desc: "接待、款待賓客。" }, { word: "期待", desc: "期盼等待。" }] },
+          { char: "蝸", zhuyin: "ㄍㄨㄚ", meaning: "軟體動物名。頭部有觸角，背負螺旋狀扁圓外殼。", tip: "左側「虫」底橫變提；右側「咼」上內為冂，下口平正。", words: [{ word: "蝸牛", desc: "腹足綱軟體動物，背負螺旋狀貝殼。" }, { word: "蝸居", desc: "比喻狹小簡陋的居所。" }] },
+          { char: "牛", zhuyin: "ㄋㄧㄡˊ", meaning: "草食反芻哺乳動物，角中空不脫落，體格健壯。", tip: "首撇短促傾斜；第二橫短、第三橫長，中豎直挺。", words: [{ word: "牛肉", desc: "牛的肌肉，供食用。" }, { word: "牛奶", desc: "母牛產出的乳汁。" }, { word: "黃牛", desc: "常見家畜牛種；亦指票販販子。" }] },
+          { char: "牠", zhuyin: "ㄊㄚ", meaning: "代名詞，專指人類以外的動物。", tip: "左側牛字旁末筆挑起；右側也字豎彎鉤圓潤舒展。", words: [{ word: "牠們", desc: "對人類以外多數動物的代稱。" }, { word: "牠的", desc: "動物的所有格稱呼。" }] },
+          { char: "吞", zhuyin: "ㄊㄨㄣ", meaning: "不咀嚼直接咽下；兼併霸佔。", tip: "上天撇捺舒展；下口扁平居中承托。", words: [{ word: "慢吞吞", desc: "說話或動作極緩慢的樣子。" }, { word: "吞嚥", desc: "咽下食物。" }, { word: "獨吞", desc: "獨自佔有全部好處利益。" }] },
+          { char: "寸", zhuyin: "ㄘㄨㄣˋ", meaning: "度量衡長度單位，十寸為一尺；極短小。", tip: "首橫開展微揚；豎鉤垂直；點在交接右下方。", words: [{ word: "一寸光陰", desc: "極短暫的寶貴時間。" }, { word: "尺寸", desc: "物件長短之度量標準。" }, { word: "寸步不離", desc: "形影不離，緊緊跟隨。" }] },
+          { char: "碌", zhuyin: "ㄌㄨˋ", meaning: "事情繁多奔忙；平凡庸俗。", tip: "左石窄小讓位；右彔下部四點水相互呼應。", words: [{ word: "忙碌", desc: "事情繁多，不得空閒。" }, { word: "勞碌", desc: "辛苦忙碌工作。" }, { word: "庸碌", desc: "平庸無所作為。" }] },
+          { char: "奔", zhuyin: "ㄅㄣ", meaning: "急步快跑；投奔。", tip: "上大撇捺如展翅之姿；下三十均稱密集。", words: [{ word: "奔跑", desc: "快速向前快跑。" }, { word: "狂奔", desc: "迅猛奔馳。" }, { word: "飛奔", desc: "如飛一樣飛快奔跑。" }] },
+          { char: "彈", zhuyin: "ㄊㄢˊ", meaning: "以手指拉物使其彈回發射；有彈性。", tip: "左弓挺直；右單字上兩點向內呼應，下橫平豎直。", words: [{ word: "彈簧", desc: "具彈性回縮特性的螺旋鋼絲零件。" }, { word: "彈性", desc: "物體受外力變形後復原的特性。" }, { word: "彈珠", desc: "小圓球玻璃童玩玩具。" }] },
+          { char: "簧", zhuyin: "ㄏㄨㄤˊ", meaning: "發聲振動薄片；機械彈力金屬條。", tip: "【教育部標準字體】下部黃上為「廿」（四筆開），非草頭！", words: [{ word: "彈簧", desc: "機械儲能緩衝彈性構件。" }, { word: "雙簧", desc: "前後兩人一演一說的曲藝形式。" }, { word: "簧片", desc: "管樂器中振動發聲的金屬薄片。" }] },
+          { char: "它", zhuyin: "ㄊㄚ", meaning: "代名詞，專指無生命之物或植物。", tip: "寶蓋覆頂；橫撇俐落；豎彎鉤底托平穩。", words: [{ word: "它們", desc: "對多數事物或植物的泛指代稱。" }, { word: "它的", desc: "非動物、非人類事物之所有格。" }] },
+          { char: "短", zhuyin: "ㄉㄨㄢˇ", meaning: "空間距離或時間長度小。", tip: "左矢首撇短，捺變長點；右豆上橫短下橫長。", words: [{ word: "短暫", desc: "時間極為短促。" }, { word: "長短", desc: "長度比較的差距。" }, { word: "縮短", desc: "使長度或時程減少縮小。" }] },
+          { char: "悲", zhuyin: "ㄅㄟ", meaning: "傷心哀痛；憐憫恤念。", tip: "上非字兩豎挺直，橫畫均勻；下心底盤平正。", words: [{ word: "悲傷", desc: "內心哀傷痛苦。" }, { word: "悲劇", desc: "結局悲慘感傷的戲劇或事件。" }, { word: "悲痛", desc: "極度悲哀傷痛。" }] },
+          { char: "流", zhuyin: "ㄌㄧㄡˊ", meaning: "液體移動；水流樣態；風尚流播。", tip: "【教育部標準字體】右上為「亠 + 厶」，切勿寫成「云」！", words: [{ word: "流動", desc: "液體、氣體自然流轉移動。" }, { word: "河流", desc: "天然地表條狀水系。" }, { word: "流行", desc: "廣泛傳播為大眾所喜好跟隨。" }] },
+          { char: "永", zhuyin: "ㄩㄥˇ", meaning: "時間長久無窮盡。漢字筆法核心。", tip: "點立正中，橫折鉤剛健，撇捺開展舒揚。", words: [{ word: "永遠", desc: "永久長遠，無終止之日。" }, { word: "永久", desc: "歷經長久時間不變。" }, { word: "永恆", desc: "永遠保持原態不滅。" }] }
+        ]
+      },
+      {
+        id: 2,
+        title: "第二課",
+        characters: [
+          { char: "貼", zhuyin: "ㄊㄧㄝ", meaning: "黏著附著；緊靠；貼近心意。", tip: "左貝窄長讓位；右占豎畫垂直挺拔，口平正。", words: [{ word: "便條貼", desc: "可隨手記事黏貼的備忘貼紙。" }, { word: "黏貼", desc: "以膠液固著在表面。" }, { word: "貼心", desc: "溫柔周到，合人心意。" }] },
+          { char: "使", zhuyin: "ㄕˇ", meaning: "運用操作；令、讓；奉命之使者。", tip: "單人居左；右吏撇捺舒展平穩承接橫畫。", words: [{ word: "使用", desc: "操作、運用工具物件。" }, { word: "天使", desc: "神差遣的可愛純潔使者。" }, { word: "使命", desc: "肩負的重大職責任務。" }] },
+          { char: "醒", zhuyin: "ㄒㄧㄥˇ", meaning: "從睡夢中回復知覺；覺悟不迷。", tip: "左酉方挺；右星日小生大，穩固居右。", words: [{ word: "提醒", desc: "提示促使警惕注意。" }, { word: "睡醒", desc: "由睡眠中清醒。" }, { word: "清醒", desc: "思緒明朗清晰未昏沉。" }] },
+          { char: "準", zhuyin: "ㄓㄨㄣˇ", meaning: "法度標竿；精確正確。", tip: "左兩點水；右上隹字四橫均勻，下十平挺。", words: [{ word: "準時", desc: "依照預約規定時間不遲到。" }, { word: "準備", desc: "預先籌辦齊備以待使用。" }, { word: "標準", desc: "衡量事物的法定準則尺度。" }] },
+          { char: "睡", zhuyin: "ㄕㄨㄟˋ", meaning: "合目入眠休息。", tip: "左目偏長窄；右垂橫畫多且均勻密集，不歪斜。", words: [{ word: "睡覺", desc: "進入睡眠歇息狀態。" }, { word: "睡眠", desc: "生物自然生理休息現象。" }, { word: "午睡", desc: "中午短暫的小憩睡眠。" }] },
+          { char: "鐘", zhuyin: "ㄓㄨㄥ", meaning: "金屬發響樂器；計時器具。", tip: "左金長捺變提；右童上下結構整齊緊密。", words: [{ word: "時鐘", desc: "指示小時分鐘之機械鐘錶。" }, { word: "鬧鐘", desc: "設有定時響鈴功能的鐘器。" }, { word: "分鐘", desc: "時間計算單位，一小時為六十分鐘。" }] },
+          { char: "效", zhuyin: "ㄒㄧㄠˋ", meaning: "所獲功用驗證；模仿跟從。", tip: "左交撇捺斂點；右攵撇短捺開張舒展。", words: [{ word: "效果", desc: "行為或藥力所引發的結果。" }, { word: "效率", desc: "產能效益與耗時投入之比。" }, { word: "仿效", desc: "遵從照樣模仿學習。" }] },
+          { char: "序", zhuyin: "ㄒㄩˋ", meaning: "條理次序；開端起始；文類。", tip: "廣字頭開張覆蓋；予橫撇收束，豎鉤垂直挺拔。", words: [{ word: "順序", desc: "依步驟排定的次序前後。" }, { word: "秩序", desc: "整齊規矩有章法的狀態。" }, { word: "程序", desc: "辦事進行的規定規則步驟。" }] },
+          { char: "而", zhuyin: "ㄦˊ", meaning: "連詞。表轉折、並列、進一步。", tip: "頂橫寬長；左右兩豎垂平；中間兩豎短平齊。", words: [{ word: "而且", desc: "表示意義進一層之連詞。" }, { word: "反而", desc: "轉折連詞，表示與預料相反。" }, { word: "因而", desc: "因果連詞，表示因此結果。" }] },
+          { char: "且", zhuyin: "ㄑㄧㄝˇ", meaning: "又、並；將要；暫時。", tip: "外框挺立；內兩短橫勻稱；底橫長而厚實承托。", words: [{ word: "並且", desc: "表並列之連接詞。" }, { word: "暫且", desc: "姑且、暫時如此。" }, { word: "況且", desc: "表追加原因條件之連詞。" }] },
+          { char: "排", zhuyin: "ㄆㄞˊ", meaning: "排列成列；推擠排出。", tip: "提手立左；右非兩長豎並行，短橫各自分展。", words: [{ word: "排隊", desc: "依先後次序成隊伍前進。" }, { word: "安排", desc: "統籌規劃各項職務工作。" }, { word: "排列", desc: "依規律排序分列。" }] },
+          { char: "冰", zhuyin: "ㄅㄧㄥ", meaning: "水凝固成的固體，冰冷寒涼。", tip: "兩點水（冫）起挑向上；水字撇捺分明舒揚。", words: [{ word: "冰箱", desc: "低溫冷藏防腐家電保鮮櫃。" }, { word: "冰塊", desc: "固態堅硬的水冰塊體。" }, { word: "冰棒", desc: "帶棒冷凍甜品點心。" }] },
+          { char: "箱", zhuyin: "ㄒㄧㄤ", meaning: "可收納儲物之方形器具。", tip: "竹字頭橫列；下相左木右目，結構端嚴。", words: [{ word: "紙箱", desc: "瓦楞紙板製成之儲運容器。" }, { word: "皮箱", desc: "皮質旅行收納行李箱包。" }, { word: "信箱", desc: "供收件投遞信件之專用箱具。" }] },
+          { char: "原", zhuyin: "ㄩㄢˊ", meaning: "原本初時；遼闊平曠土地。", tip: "廠字頭平坦；泉上白下小，勻稱居中。", words: [{ word: "原來", desc: "本來起始時的真實實情。" }, { word: "原因", desc: "促發事情發生的根源由頭。" }, { word: "草原", desc: "生長多年生草本之開闊平坦大地。" }] },
+          { char: "條", zhuyin: "ㄊㄧㄠˊ", meaning: "細長形狀物；款項；量詞。", tip: "上折反文撇捺大方；下木豎直點出平衡。", words: [{ word: "便條紙", desc: "隨手簡要記事的小張便箋紙。" }, { word: "麵條", desc: "麵粉加工成細長之食品。" }, { word: "線條", desc: "長形痕跡或形狀輪廓線。" }] }
+        ]
+      },
+      {
+        id: 3,
+        title: "第三課",
+        characters: [
+          { char: "統", zhuyin: "ㄊㄨㄥˇ", meaning: "事物的總綱；綜合各部分成為整體。", tip: "【教育部標準字體】右邊充上部為「亠 + 厶」，非「云」！", words: [{ word: "統計", desc: "蒐集數據予以客觀計算分析之工作。" }, { word: "傳統", desc: "代代相傳之經典文化與習慣規範。" }, { word: "總統", desc: "共和立憲政體國家元首。" }] },
+          { char: "票", zhuyin: "ㄆㄧㄠˋ", meaning: "記名或有價證券券票。", tip: "上覀寬扁；下示四筆平正承接。", words: [{ word: "投票", desc: "選舉決策時投下表決票券。" }, { word: "車票", desc: "乘車之合法憑證票據。" }, { word: "門票", desc: "入場參觀之許可憑證。" }] },
+          { char: "角", zhuyin: "ㄐㄧㄠˇ", meaning: "動物頂生硬質骨刺；尖角角落。", tip: "【教育部標準字體】中央豎筆不穿透頂部橫畫。", words: [{ word: "角色", desc: "劇中扮演人物或生活責任地位。" }, { word: "角落", desc: "物體交界之隱蔽偏狹處。" }, { word: "三角形", desc: "三線段首尾相接形成之平面圖形。" }] },
+          { char: "板", zhuyin: "ㄅㄢˇ", meaning: "平整堅硬片狀木材原料。", tip: "左木捺改點；右反橫撇長展。", words: [{ word: "黑板", desc: "教室內以粉筆書寫之黑色板面。" }, { word: "板擦", desc: "擦拭黑板筆粉之毛氈板具。" }, { word: "老闆", desc: "商業經營主導者。" }] },
+          { char: "業", zhuyin: "ㄧㄝˋ", meaning: "事業職業；功課課業。", tip: "四直豎並列勻整，中橫厚實貫串。", words: [{ word: "作業", desc: "課堂交代練習繳交之習題。" }, { word: "學業", desc: "校園求學專研之學術功課。" }, { word: "畢業", desc: "依規定研習完竣該教育階段。" }] },
+          { char: "本", zhuyin: "ㄅㄣˇ", meaning: "草木根幹；原基根本；書籍量詞。", tip: "木下加短橫，指明樹根之所。", words: [{ word: "課本", desc: "教學指定之教科書讀本。" }, { word: "書本", desc: "編印裝訂成冊之書籍。" }, { word: "本來", desc: "原始本初之狀態。" }] },
+          { char: "況", zhuyin: "ㄎㄨㄤˋ", meaning: "情勢動態現況；更、何況。", tip: "左三點水；右兄上口平正，下兒舒張。", words: [{ word: "情況", desc: "事務演變之即時狀況情形。" }, { word: "狀況", desc: "狀態情況。" }, { word: "近況", desc: "最近之動態近況。" }] },
+          { char: "該", zhuyin: "ㄍㄞ", meaning: "理當如此；指稱詞（該員）。", tip: "左言旁立言；右亥各橫平直豎折有力。", words: [{ word: "應該", desc: "理所當然合乎常理。" }, { word: "應當", desc: "應該如此進行。" }, { word: "該處", desc: "所指的那一個地點處所。" }] },
+          { char: "喊", zhuyin: "ㄏㄢˇ", meaning: "大聲呼叫喧嚷。", tip: "左口小讓；右咸橫戈伸張大方。", words: [{ word: "大喊", desc: "放聲大呼。" }, { word: "呼喊", desc: "大聲呼叫召喚。" }, { word: "吶喊", desc: "高聲呼號助長聲勢威儀。" }] },
+          { char: "文", zhuyin: "ㄨㄣˊ", meaning: "文字語言；文章篇章；溫文。", tip: "點正橫展，撇捺舒朗如人行步。", words: [{ word: "國語文", desc: "本國母語文字與語言學科。" }, { word: "文章", desc: "記錄情意理則之字句篇章。" }, { word: "文具", desc: "書寫閱讀專用工具物品。" }] },
+          { char: "具", zhuyin: "ㄐㄩˋ", meaning: "器物用具；備足具有。", tip: "上目方正；中橫三筆平行；下撇點分立支撐。", words: [{ word: "文具", desc: "讀書筆墨文案器具。" }, { word: "玩具", desc: "專供幼兒遊戲玩賞之器物。" }, { word: "工具", desc: "製造生產勞動所用之器具。" }] },
+          { char: "理", zhuyin: "ㄌㄧˇ", meaning: "事理條規；整理調理；理解明白。", tip: "王旁提筆向上；里田平正底橫寬大。", words: [{ word: "整理", desc: "整飭調理使有條不紊。" }, { word: "理解", desc: "洞曉明白其中奧義。" }, { word: "道理", desc: "事理規律及正當原則。" }] },
+          { char: "此", zhuyin: "ㄘˇ", meaning: "這、這個；此處。", tip: "左止短平；右橫撇收住，豎彎鉤底托圓潤。", words: [{ word: "從此", desc: "從這個時點起始。" }, { word: "因此", desc: "因為此項緣故。" }, { word: "彼此", desc: "雙方互稱，這個與那個。" }] },
+          { char: "備", zhuyin: "ㄅㄟˋ", meaning: "預先安排準備；完整完備。", tip: "單人居左；右部各橫層疊緊湊勻稱。", words: [{ word: "準備", desc: "預先籌辦齊備以待使用。" }, { word: "設備", desc: "因應需求所構築的器物軟硬體。" }, { word: "具備", desc: "齊備擁有相應資格能力。" }] },
+          { char: "易", zhuyin: "ㄧˋ", meaning: "簡易不難；交換易手；變易。", tip: "上日下勿，撇畫平行流暢。", words: [{ word: "容易", desc: "簡便好做，不費氣力。" }, { word: "簡易", desc: "簡單平易。" }, { word: "貿易", desc: "跨國或商業之商品買賣交換。" }] }
+        ]
+      },
+      {
+        id: 4,
+        title: "第四課",
+        characters: [
+          { char: "堂", zhuyin: "ㄊㄤˊ", meaning: "高廣殿堂廳屋；授課處所。", tip: "尚字頭正中對齊，口平土穩。", words: [{ word: "學堂", desc: "舊時學校講學處。" }, { word: "禮堂", desc: "舉行盛典儀式之專用大廳堂。" }, { word: "課堂", desc: "師生教學互動之教室空間。" }] },
+          { char: "鈴", zhuyin: "ㄌㄧㄥˊ", meaning: "金屬製撞擊或電振發聲鐘鈴。", tip: "左金長捺變提；右令撇捺伸展大方。", words: [{ word: "風鈴", desc: "隨風擺盪發出清響之鈴鐺飾品。" }, { word: "鈴聲", desc: "鈴鐺發出之清脆聲響。" }, { word: "門鈴", desc: "安裝門外供訪客按鳴通報之鈴鐺。" }] },
+          { char: "徒", zhuyin: "ㄊㄨˊ", meaning: "學生門生；徒步步行；空無。", tip: "雙人立左；走字各筆平正有勁。", words: [{ word: "學徒", desc: "拜師學習專業手藝技能之學生。" }, { word: "徒弟", desc: "門生受業者。" }, { word: "徒步", desc: "不搭乘工具單純以雙足行走。" }] },
+          { char: "傅", zhuyin: "ㄈㄨˋ", meaning: "身懷專業手藝之師傅；輔佐教導。", tip: "單人居左；專字橫豎交錯井然，寸平穩。", words: [{ word: "師傅", desc: "對有手藝專長工匠長者之敬稱。" }, { word: "師傅手藝", desc: "匠師多年累積純熟精細之技能。" }] },
+          { char: "撿", zhuyin: "ㄐㄧㄢˇ", meaning: "由地面拾起物體。", tip: "提手在左；僉字人字開張，下部緊密。", words: [{ word: "撿起", desc: "從地上拾取起來。" }, { word: "撿拾", desc: "收拾地上散落之物品。" }, { word: "撿柴", desc: "在山野拾取枯木柴火。" }] },
+          { char: "柴", zhuyin: "ㄔㄞˊ", meaning: "供燃燒取暖烹飪之木枝。", tip: "上此字左右寬度均衡；下木承接穩固。", words: [{ word: "木柴", desc: "乾燥供柴燃之樹幹枯木。" }, { word: "柴火", desc: "烹炊燃燒的柴料薪火。" }, { word: "砍柴", desc: "在林間伐取樹木供作薪柴。" }] },
+          { char: "鍋", zhuyin: "ㄍㄨㄛ", meaning: "烹調食物的金屬深口炊器。", tip: "金旁窄挺；右咼上內冂非口，下口平正。", words: [{ word: "鍋子", desc: "烹煮湯菜餚之深型鍋具。" }, { word: "火鍋", desc: "以鍋煮湯現燙現食之料理飲食。" }, { word: "熱鍋", desc: "加熱燒熱之調理油鍋具。" }] },
+          { char: "冒", zhuyin: "ㄇㄠˋ", meaning: "向外穿透湧出；不懼危難。", tip: "上冃（兩橫不碰兩邊邊框），下目方正。", words: [{ word: "冒險", desc: "不避危難勇往直前。" }, { word: "冒出", desc: "自內部穿透湧現於外。" }, { word: "冒煙", desc: "向外飄出裊裊煙氣。" }] },
+          { char: "騰", zhuyin: "ㄊㄥˊ", meaning: "躍昇翻滾；空出時間或處所。", tip: "左月窄長；右邊上下部件緊湊層疊，捺伸放。", words: [{ word: "熱氣騰騰", desc: "熱氣蒸騰濃厚上升的樣子。" }, { word: "沸騰", desc: "液體受熱至沸點翻滾開張。" }, { word: "奔騰", desc: "萬馬狂奔或怒濤翻滾之壯大氣勢。" }] },
+          { char: "揚", zhuyin: "ㄧㄤˊ", meaning: "高舉飛騰；稱揚讚頌。", tip: "提手居左；右昜上日下勿撇筆平行。", words: [{ word: "稱揚", desc: "讚頌稱許他人善行美德。" }, { word: "飄揚", desc: "在風中隨風展布飄揚舞動。" }, { word: "揚起", desc: "高高舉起揚揚升騰。" }] },
+          { char: "湯", zhuyin: "ㄊㄤ", meaning: "沸水熱水；菜餚含汁湯飲。", tip: "三點水立左；右昜字舒展瀟灑。", words: [{ word: "熱湯", desc: "滾熱香醇之食用湯羹。" }, { word: "喝湯", desc: "飲用熱湯菜餚。" }, { word: "濃湯", desc: "質地濃郁稠密之湯汁羹湯。" }] },
+          { char: "止", zhuyin: "ㄓˇ", meaning: "停止不前；終止阻礙。", tip: "中豎筆挺立；短橫向右上微揚，底橫寬厚平坦。", words: [{ word: "停止", desc: "不再動作運作或前行。" }, { word: "阻止", desc: "橫加阻攔使其不得行動。" }, { word: "止步", desc: "停住步伐不再向前走動。" }] },
+          { char: "抽", zhuyin: "ㄔㄡ", meaning: "自內拔出提取；伸展。", tip: "提手旁讓左；右由上下貫通垂直居中。", words: [{ word: "抽屜", desc: "桌櫃內部可水平滑動拉出之儲物盒匣。" }, { word: "抽取", desc: "從整批中取出一部分抽出。" }, { word: "抽出", desc: "向外拔出或挪空時間。" }] },
+          { char: "解", zhuyin: "ㄐㄧㄝˇ", meaning: "剖分剖析；解開消除；理解明白。", tip: "左角字頭；右刀利牛穩，起落俐落。", words: [{ word: "解決", desc: "妥善處理紛爭或難題。" }, { word: "解釋", desc: "說明語法事理之真義。" }, { word: "解答", desc: "回答釋破謎題難事。" }] },
+          { char: "薪", zhuyin: "ㄒㄧㄣ", meaning: "砍柴燃火之枯木；工資報酬。", tip: "草字頭平展；新左木右斤，安排勻稱。", words: [{ word: "杯水車薪", desc: "比喻力量微薄，對龐大災厄無濟於事。" }, { word: "薪水", desc: "定時獲取之固定勞務報酬工資。" }, { word: "薪柴", desc: "供爐灶燃燒之木枝柴火。" }] }
+        ]
+      },
+      {
+        id: 5,
+        title: "第五課",
+        characters: [
+          { char: "梨", zhuyin: "ㄌㄧˊ", meaning: "落葉喬木果樹，果實水分豐富甜美。", tip: "上利左禾右刀；下木寬長支撐全字重心。", words: [{ word: "水梨", desc: "多汁甜潤香醇的食用梨果。" }, { word: "鳳梨", desc: "熱帶常見著名香甜多肉水果。" }, { word: "雪梨", desc: "名貴細緻香甜的雪白梨果。" }] },
+          { char: "撐", zhuyin: "ㄔㄥ", meaning: "頂住不倒；張開雨傘；勉強支柱。", tip: "提手立左；右尚掌手結構緊實。", words: [{ word: "撐傘", desc: "撐開雨傘防雨防曬。" }, { word: "支撐", desc: "由下頂持使重量物體不致倒塌。" }, { word: "硬撐", desc: "咬牙忍受勉強堅持不屈服。" }] },
+          { char: "甜", zhuyin: "ㄊㄧㄢˊ", meaning: "糖味滋味；甘美美好。", tip: "左舌方整；右甘內兩橫間距均勻。", words: [{ word: "甘甜", desc: "滋味甜美香潤可口。" }, { word: "甜美", desc: "甜潤怡人令人舒爽。" }, { word: "甜點", desc: "正餐後食用美味精緻糕餅甜食。" }] },
+          { char: "汁", zhuyin: "ㄓ", meaning: "含有水分的液體。", tip: "三點水在左；右十一豎垂懸正中。", words: [{ word: "果汁", desc: "新鮮果肉榨壓獲取的原汁飲料。" }, { word: "湯汁", desc: "烹煮湯菜中豐富的水分精華。" }, { word: "墨汁", desc: "供毛筆書寫書法的黑色墨汁水。" }] },
+          { char: "綿", zhuyin: "ㄇㄧㄢˊ", meaning: "絲綿棉絨；接連不斷貌。", tip: "左糹旁；右帛上白下巾，端莊平正。", words: [{ word: "綿延", desc: "山脈或河流連續不斷伸展延續。" }, { word: "綿羊", desc: "毛被可剪毛紡織的草食性家畜。" }, { word: "海綿", desc: "多孔具高彈性及超強吸水力之材料。" }] },
+          { char: "腐", zhuyin: "ㄈㄨˇ", meaning: "物質質變敗壞；陳腐舊習。", tip: "廣字覆蓋；內部付與肉嚴密排列。", words: [{ word: "豆腐", desc: "黃豆打漿點滷凝固製成家常食材。" }, { word: "腐爛", desc: "物質受細菌微生物侵蝕潰爛敗壞。" }, { word: "腐敗", desc: "陳腐變質潰敗不振。" }] },
+          { char: "爛", zhuyin: "ㄌㄢˋ", meaning: "熟爛過透；破碎毀壞；燦爛光華。", tip: "火字旁讓位在左；右蘭筆畫多要均勻排列。", words: [{ word: "破爛", desc: "破碎殘缺毀損不堪。" }, { word: "燦爛", desc: "光彩耀眼奪目之盛況。" }, { word: "腐爛", desc: "因變質變味而徹底潰爛敗壞。" }] },
+          { char: "結", zhuyin: "ㄐㄧㄝˊ", meaning: "繫紮結扣；長出果實；完畢告終。", tip: "左糹旁；右吉上士下口，平穩莊重。", words: [{ word: "結果", desc: "長成果實；事物最終所迎來的收場結局。" }, { word: "結束", desc: "事項告終完竣不再繼續。" }, { word: "團結", desc: "彼此凝聚同心協力。" }] },
+          { char: "筷", zhuyin: "ㄎㄨㄞˋ", meaning: "夾取食物進餐之細長小棍棒。", tip: "竹字頭橫列頂端；下快豎心旁配夬字舒展。", words: [{ word: "筷子", desc: "東方餐飲必備的一對細長餐具。" }, { word: "竹筷", desc: "以天然竹子削切研磨製成之筷箸。" }, { word: "環保筷", desc: "可隨身攜帶重複洗滌使用之自備餐筷。" }] },
+          { char: "膠", zhuyin: "ㄐㄧㄠ", meaning: "具黏附性液質；橡膠合成物。", tip: "月字在左；右翏上下筆畫搭配緊湊密緻。", words: [{ word: "膠水", desc: "具有黏稠性的紙張黏貼膠劑。" }, { word: "橡膠", desc: "高彈性耐磨防水之彈性物質材料。" }, { word: "塑膠", desc: "高分子人造合成耐用材料。" }] },
+          { char: "綁", zhuyin: "ㄅㄤˇ", meaning: "以繩索纏繞繫緊束縛。", tip: "左糹旁；右邦上丰下邑互相對照呼應。", words: [{ word: "綁緊", desc: "拉緊繩帶牢牢固定。" }, { word: "綑綁", desc: "以繩索緊密盤繞束縛住。" }, { word: "綁鞋帶", desc: "繫好運動球鞋鞋面之鬆緊鞋帶。" }] },
+          { char: "夾", zhuyin: "ㄐㄧㄚˊ", meaning: "從兩端壓持固定；收納夾本。", tip: "大字撇捺伸展大器；內部兩副點撇對稱勻稱。", words: [{ word: "夾子", desc: "兩片相合以彈力固定物品之器具。" }, { word: "皮夾", desc: "放置鈔票卡片之折疊隨身皮包。" }, { word: "夾縫", desc: "緊鄰兩物件間之狹小間隙。" }] },
+          { char: "遮", zhuyin: "ㄓㄜ", meaning: "阻擋視線光芒；掩避防衛。", tip: "走之底平坦舒放；內庶字橫點整齊有序。", words: [{ word: "遮陽", desc: "遮擋烈日強烈光芒照曬。" }, { word: "遮擋", desc: "橫加抵擋阻隔視線或風雨。" }, { word: "遮蓋", desc: "自上方完整掩蔽遮掩起來。" }] },
+          { char: "固", zhuyin: "ㄍㄨˋ", meaning: "堅實穩健不鬆脫；執意堅持。", tip: "大囗框筆直方挺；內古字橫長橫平豎直。", words: [{ word: "固定", desc: "安頓妥當不再動搖鬆移。" }, { word: "堅固", desc: "結構緊湊強壯不易毀損。" }, { word: "穩固", desc: "平穩牢固不易傾頹。" }] },
+          { char: "景", zhuyin: "ㄐㄧㄥˇ", meaning: "光景風光；境遇景象。", tip: "上日字窄扁；下京點撇豎鉤平衡底盤。", words: [{ word: "風景", desc: "大自然山川明媚之風光景致。" }, { word: "景色", desc: "雙眼所覽看見的景致。" }, { word: "景象", desc: "眼前呈現之整體社會環境氣象。" }] }
+        ]
+      },
+      {
+        id: 6,
+        title: "第六課",
+        characters: [
+          { char: "墨", zhuyin: "ㄇㄛˋ", meaning: "寫字作畫的黑色顏料；黑色的。", tip: "上黑下土，黑字點畫緊湊，土字底橫平寬穩重。", words: [{ word: "墨水", desc: "鋼筆或書寫專用的深色顏料液體。" }, { word: "筆墨", desc: "毛筆與墨汁，借指文章或文字表達。" }, { word: "墨汁", desc: "供毛筆書寫書法的濃稠黑色液體。" }] },
+          { char: "製", zhuyin: "ㄓˋ", meaning: "製造、加工；訂定法則制度。", tip: "上左制，右刀直立；下衣字底撇捺舒展平穩承托。", words: [{ word: "製作", desc: "將原料加工成成品物品。" }, { word: "製造", desc: "依工藝大量生產規格產品。" }, { word: "製成", desc: "經加工而完成製出。" }] },
+          { char: "部", zhuyin: "ㄅㄨˋ", meaning: "整體中的一部分；機關單位分門別類。", tip: "左立口平正；右耳旁（阝）彎鉤飽滿，長豎垂直。", words: [{ word: "部分", desc: "整體之中分割出來的一塊。" }, { word: "全部", desc: "所有的整體的總稱。" }, { word: "部門", desc: "機關組織中執掌不同職務的單位。" }] },
+          { char: "芯", zhuyin: "ㄒㄧㄣ", meaning: "物體中心最核心之部分；燈芯、筆芯。", tip: "草字頭橫開；下心字三點呼應，臥鉤圓潤有彈性。", words: [{ word: "筆芯", desc: "鉛筆或原子筆內部盛裝墨顏之核心細棒。" }, { word: "燈芯", desc: "油燈中用以吸油燃燒的棉繩線心。" }, { word: "芯子", desc: "各種器物中最中心不可或缺的基底部分。" }] },
+          { char: "斷", zhuyin: "ㄉㄨㄢˋ", meaning: "折斷、分成兩段；判定決斷；止息絕止。", tip: "左邊幺幺米排列緊湊，右斤字橫撇垂直分明。", words: [{ word: "折斷", desc: "因外力折損而分離成兩截。" }, { word: "切斷", desc: "用刀刃分割截斷通道或物體。" }, { word: "斷開", desc: "使原本相連的事物分離脫開。" }] },
+          { char: "機", zhuyin: "ㄐㄧ", meaning: "機械器械；重要關鍵轉機；飛機航具。", tip: "左木旁讓位捺變點；右幾字橫折彎鉤流暢有力。", words: [{ word: "機器", desc: "由多種零件組合能轉換能量的力學工具。" }, { word: "機會", desc: "恰逢其時的關鍵時機與機緣。" }, { word: "飛機", desc: "具動力與機翼在空中飛行的航空交通載具。" }] },
+          { char: "器", zhuyin: "ㄑㄧˋ", meaning: "器具器皿；器官；人才胸襟度量。", tip: "四個口字在四方對稱分佈，中央大字穩穩頂住。", words: [{ word: "器具", desc: "供日常操作使用之各類工具器物。" }, { word: "電器", desc: "利用電能運作之各類家電設備。" }, { word: "容器", desc: "用以盛裝物品之箱盒罐瓶等器物。" }] },
+          { char: "凹", zhuyin: "ㄠ", meaning: "向內塌陷低落，與凸字相對。", tip: "筆畫特殊：豎、橫折折、豎、橫折、橫，邊角方正。", words: [{ word: "凹凸", desc: "高低不平、凸起凹陷的立體樣貌。" }, { word: "凹陷", desc: "表面受擠壓向內陷落坑窪。" }, { word: "凹槽", desc: "專門開鑿供接合卡榫的凹入長槽。" }] },
+          { char: "槽", zhuyin: "ㄘㄠˊ", meaning: "盛放飼料或承接水流的長方形深器具；凹凹空間。", tip: "左木立左；右曹上曲下日，橫筆排列均勻密集。", words: [{ word: "凹槽", desc: "物體表面凹進去的長條凹口。" }, { word: "水槽", desc: "盛水洗滌或引導水流的長型水池具。" }, { word: "槽孔", desc: "凹下去可供插合插入的孔穴口。" }] },
+          { char: "入", zhuyin: "ㄖㄨˋ", meaning: "由外進入到內部；收納採納。", tip: "先寫短撇，後寫長捺；捺畫起筆高覆蓋住撇頭。", words: [{ word: "進入", desc: "從外側移步走到內部空間。" }, { word: "入口", desc: "供人車進門步入之通道通道口。" }, { word: "投入", desc: "全神貫注全力參與；放進投入。" }] },
+          { char: "另", zhuyin: "ㄌㄧㄥˋ", meaning: "此外、另外其餘；分開獨立。", tip: "上口窄小方正；下面力字橫折鉤挺拔有勁，撇展。", words: [{ word: "另外", desc: "此外，在預計項目範圍之外。" }, { word: "另一個", desc: "另外這一個不同的選擇。" }, { word: "另類", desc: "與傳統常規風格截然不同之特異型態。" }] },
+          { char: "治", zhuyin: "ㄓˋ", meaning: "治理管理；醫治治療疾病。", tip: "三點水在左；右台字上厶下口端正對齊。", words: [{ word: "治理", desc: "整頓管理國家或社會各項政務事務。" }, { word: "治病", desc: "透過醫學藥理醫治疾病以求復原。" }, { word: "醫治", desc: "診斷給藥醫護治療。" }] },
+          { char: "桿", zhuyin: "ㄍㄢˇ", meaning: "較細長之木棍棒；器械操作手柄。", tip: "左木字讓位；右罕上干下十，橫豎分明有節奏。", words: [{ word: "筆桿", desc: "鋼筆或毛筆供手持握住的細長筆身桿子。" }, { word: "欄桿", desc: "設於走廊階梯邊緣用以安全防墜的圍護條柱。" }, { word: "秤桿", desc: "傳統度量衡秤重時標註刻度的平衡長木桿。" }] },
+          { char: "削", zhuyin: "ㄒㄧㄠ", meaning: "以刀刮除物體表層；消減剝除。", tip: "左肖上小下月；右立刀旁（刂）短豎長豎利落垂立。", words: [{ word: "削鉛筆", desc: "用削鉛筆機或小刀削去鉛筆木質露出筆芯。" }, { word: "削皮", desc: "削去水果或根莖植物表皮。" }, { word: "削弱", desc: "使原本強盛的力量或權勢減低變弱。" }] }
+        ]
+      },
+      {
+        id: 7,
+        title: "第七課",
+        characters: [
+          { char: "鹹", zhuyin: "ㄒㄧㄢˊ", meaning: "像食鹽般具刺激味蕾的鹽味滋味。", tip: "左鹵字結構密；右咸字斜戈長伸，字態緊緻。", words: [{ word: "鹹味", desc: "食鹽融解產生之鹽味口感。" }, { word: "鹹度", desc: "料理菜餚中含鹽量濃度比例指標。" }, { word: "鹹菜", desc: "以粗鹽醃漬發酵保存之芥菜蔬菜。" }] },
+          { char: "蔚", zhuyin: "ㄨㄟˋ", meaning: "草木茂盛貌；蔚藍盛大壯闊貌。", tip: "草字頭橫展；下尉字左上尸中示下寸，各部勻稱。", words: [{ word: "蔚藍", desc: "如深邃無雲晴空之鮮亮湛藍色。" }, { word: "蔚為壯觀", desc: "匯聚匯集成為極宏偉壯闊的景觀。" }] },
+          { char: "航", zhuyin: "ㄏㄤˊ", meaning: "舟船車機在水空前行；航行遨遊。", tip: "舟字旁底橫改提；右亢字上亠下几舒展大方。", words: [{ word: "航空", desc: "利用飛機在空中大氣層飛行航運的事業。" }, { word: "航行", desc: "船隻在水面或飛機在空中依航道行進。" }, { word: "航線", desc: "經主管機關核定飛機船艦行進的固定路線。" }] },
+          { char: "乘", zhuyin: "ㄔㄥˊ", meaning: "騎坐搭乘交通工具；算術乘法。", tip: "首撇橫展，下中豎筆立挺，四個點撇捺四面開張。", words: [{ word: "乘車", desc: "坐進公車或火車交通載具。" }, { word: "乘坐", desc: "坐上交通工具或座椅座位。" }, { word: "乘法", desc: "算術四則運算中基於加法進階的乘倍運算。" }] },
+          { char: "橇", zhuyin: "ㄑㄧㄠ", meaning: "在冰雪地面滑行的無輪滑板器具。", tip: "左木字長挺；右毳字由三個毛字品字形排列組成。", words: [{ word: "雪橇", desc: "在極地雪原以鹿犬牽引滑行之冰雪雪具。" }, { word: "雪橇犬", desc: "專受訓練在寒原冰雪中拉曳雪橇的耐寒犬隻。" }] },
+          { char: "坡", zhuyin: "ㄆㄛ", meaning: "傾斜不平坦的地勢表面；山坡斜坡。", tip: "左土字底橫改提讓位；右皮字橫撇斜展橫折有力。", words: [{ word: "山坡", desc: "山巒兩旁傾斜起伏的土地坡面。" }, { word: "斜坡", desc: "具有傾斜坡度的高低路面地面。" }, { word: "下坡", desc: "由高處沿坡面順勢朝低處走下。" }] },
+          { char: "野", zhuyin: "ㄧㄝˇ", meaning: "遠離市區的原野郊外；不受拘束野生野趣。", tip: "左里字田平底寬；右予字上橫短，下豎彎鉤圓轉。", words: [{ word: "野外", desc: "郊外遠離都市聚落的原野自然環境。" }, { word: "原野", desc: "平坦遼闊無垠之自然荒野平原。" }, { word: "野草", desc: "生長在田野荒郊無人培育的天然雜草。" }] },
+          { char: "閉", zhuyin: "ㄅㄧˋ", meaning: "關門合攏；停止終止結束。", tip: "門字框兩邊對稱垂直；內才字橫平豎直撇舒展。", words: [{ word: "閉眼", desc: "合攏雙眼休息或沈思睡覺。" }, { word: "關閉", desc: "掩閉門窗或停止程式電源運轉。" }, { word: "閉幕", desc: "盛大活動展演慶典宣告正式結束告終。" }] },
+          { char: "深", zhuyin: "ㄕㄣ", meaning: "自表面至底部距離大；深奧；時間久遠。", tip: "三點水在左；右邊上冖下木，穴部穿插自然。", words: [{ word: "深入", desc: "進到內部深層處；深入研究探索。" }, { word: "深淺", desc: "深度距離的度量衡量或經驗深淺。" }, { word: "深坑", desc: "深陷巨大的地下窪洞地坑。" }] },
+          { char: "吸", zhuyin: "ㄒㄧ", meaning: "向內收納氣體液體；吸引引進。", tip: "左口字小讓；右及字撇短，橫折折撇順暢大度。", words: [{ word: "呼吸", desc: "人體吸納新鮮氧氣並呼出二氧化碳之生理。" }, { word: "吸收", desc: "將水分養分汲取進入體內；吸納採納。" }, { word: "吸管", desc: "供飲用盛杯飲料的細長空心塑膠或環保吸管。" }] },
+          { char: "欣", zhuyin: "ㄒㄧㄣ", meaning: "喜悅歡欣；蓬勃喜樂。", tip: "左斤字橫平豎直立；右欠字撇短，捺腳平實展開。", words: [{ word: "欣賞", desc: "以愉悅審美的心情觀賞品味美的事物。" }, { word: "欣喜", desc: "內心充滿歡欣喜悅歡暢。" }, { word: "欣慰", desc: "心情歡喜感到踏實欣喜寬慰。" }] },
+          { char: "賞", zhuyin: "ㄕㄤˇ", meaning: "觀賞品評；賜給獎勵賜賞；獎品。", tip: "尚字頭在頂方正；下貝字窄直挺立平正承接。", words: [{ word: "欣賞", desc: "品味觀覽美術文學等雅緻美好的事物。" }, { word: "賞月", desc: "在中秋佳節夜晚仰望欣賞清澄圓月。" }, { word: "獎賞", desc: "對立功表現優異者給予實質榮譽財物賞賜。" }] },
+          { char: "瞞", zhuyin: "ㄇㄢˊ", meaning: "遮掩真相不讓他人知曉；欺矇。", tip: "左目字窄長；右滿字上草頭下兩点橫水緊實排列。", words: [{ word: "瞞騙", desc: "隱藏事實真相予以欺騙哄瞞。" }, { word: "隱瞞", desc: "將事實暗暗遮蓋不對外公開吐實。" }, { word: "欺瞞", desc: "存心欺哄欺騙瞞哄他人。" }] }
+        ]
+      },
+      {
+        id: 8,
+        title: "第八課",
+        characters: [
+          { char: "寄", zhuyin: "ㄐㄧˋ", meaning: "遞送託付寄遞；依託寄宿。", tip: "寶蓋頭覆頂；下奇字左大右可，橫平豎直對齊。", words: [{ word: "寄信", desc: "將書信經由郵局或郵筒投遞遞送寄出。" }, { word: "寄居", desc: "暫時借住或附托在他人居所生活。" }, { word: "寄託", desc: "將內心情感或期望托付在某人事物上。" }] },
+          { char: "居", zhuyin: "ㄐㄩ", meaning: "住處居所；停留居住；處於某地位。", tip: "尸字頭橫折左撇開闊；下古字十平口正穩重。", words: [{ word: "居住", desc: "長期固定生活定居在某個處所。" }, { word: "寄居蟹", desc: "腹部柔軟常寄居在貝殼內的海洋甲殼動物。" }, { word: "居民", desc: "在該地域擁有戶籍長期生活的人民住民。" }] },
+          { char: "幕", zhuyin: "ㄇㄨˋ", meaning: "覆蓋懸掛的布幔大幕；戲劇演出的段落。", tip: "草字頭橫開；中日大結構緊湊，下巾字垂挺。", words: [{ word: "螢幕", desc: "電子設備顯現投射圖像影片的平面面板螢幕。" }, { word: "開幕", desc: "重大展會或賽事拉開帷幕宣布正式展開。" }, { word: "夜幕", desc: "夜色低垂籠罩大地如巨大黑色帳幕一般。" }] },
+          { char: "杯", zhuyin: "ㄅㄟ", meaning: "盛裝茶水液體的圓形飲器；競賽獎盃。", tip: "左木字捺縮長點；右不字首橫短，豎垂直撇捺開展。", words: [{ word: "杯子", desc: "盛裝熱水冷飲供直接飲用之飲水器具。" }, { word: "水杯", desc: "隨身盛裝飲用水之水杯器皿。" }, { word: "獎杯", desc: "競賽獲勝頒發作為榮譽表彰之杯狀獎品。" }] },
+          { char: "殼", zhuyin: "ㄎㄜˊ", meaning: "堅硬的表層外皮；貝殼、蛋殼。", tip: "上士中冖，几字舒展，右殳字橫折捺腳平實。", words: [{ word: "貝殼", desc: "海洋或淡水軟體動物體表分泌之堅硬鈣質外殼。" }, { word: "蛋殼", desc: "鳥類禽類受精蛋卵外部保護之硬質脆殼。" }, { word: "硬殼", desc: "質地堅硬難破之保護表層外殼。" }] },
+          { char: "類", zhuyin: "ㄌㄟˋ", meaning: "品種類別；相像相像相似；歸納分類。", tip: "左米字方正；右上大，右下頁字貝腳端正。", words: [{ word: "種類", desc: "具有共同性質特質歸納出的品種門類。" }, { word: "分類", desc: "依據特質標準將繁多物品歸入相應範疇。" }, { word: "人類", desc: "具有高度智能能使用語言創造文明的靈長動物。" }] },
+          { char: "瓶", zhuyin: "ㄆㄧㄥˊ", meaning: "口小腹大用以裝液體的容器；花瓶。", tip: "左并字兩點兩豎整齊；右瓦字橫折彎鉤圓順有力。", words: [{ word: "瓶子", desc: "頸細口小用以盛裝酒水飲料之容器器具。" }, { word: "水瓶", desc: "外出隨身攜帶飲用水之金屬或塑膠水壺水瓶。" }, { word: "花瓶", desc: "插放鮮花供觀賞擺設美化環境之雅緻瓶皿。" }] },
+          { char: "蓋", zhuyin: "ㄍㄞˋ", meaning: "覆蓋遮頂；器物之頂蓋；修造建築。", tip: "羊字頭三橫平行；中間大字平，下皿字方平穩重。", words: [{ word: "蓋子", desc: "器物頂部遮擋保護防塵之遮蔽蓋件。" }, { word: "覆蓋", desc: "自上方大面積掩蔽籠罩遮覆住。" }, { word: "遮蓋", desc: "掩蔽遮擋免受風沙吹曬侵蝕。" }] },
+          { char: "淨", zhuyin: "ㄐㄧㄥˋ", meaning: "潔白無塵；純粹乾淨；洗滌乾淨。", tip: "兩點水（冫）挺拔；右爭字刀頭橫撇豎鉤挺拔清秀。", words: [{ word: "乾淨", desc: "潔淨整齊，毫無塵埃汙漬髒汙。" }, { word: "純淨", desc: "純潔潔白無任何雜質滲雜。" }, { word: "潔淨", desc: "清潔乾淨的清爽樣貌。" }] },
+          { char: "志", zhuyin: "ㄓˋ", meaning: "志向願望抱負；記錄誌志。", tip: "上士字上橫長下橫短；下心字三點呼應托起。", words: [{ word: "志願", desc: "內心立意嚮往想實現之美好志向心願。" }, { word: "志氣", desc: "勇於面對逆境求進步之豪情傲骨與氣魄。" }, { word: "同志", desc: "擁有共同志向理想並肩奮鬥的朋友。" }] },
+          { char: "垃", zhuyin: "ㄌㄜˋ", meaning: "垃圾（廢棄物）之連綿詞專用字。", tip: "左土字底橫改提讓位；右立字上點正中，底橫長直。", words: [{ word: "垃圾", desc: "日常生活淘汰廢棄無用之雜物廢棄物。" }, { word: "垃圾桶", desc: "專供暫時收納棄置廢棄垃圾之桶箱容器。" }] },
+          { char: "圾", zhuyin: "ㄙㄜˋ", meaning: "垃圾（廢棄物）之連綿詞專用字。", tip: "左土字提筆利落；右及字橫折折撇一氣呵成圓轉有神。", words: [{ word: "垃圾", desc: "家庭廢棄或產業廢料之總稱。" }, { word: "倒垃圾", desc: "將家中累積廢棄物移出丟入專用垃圾清運車。" }] },
+          { char: "位", zhuyin: "ㄨㄟˋ", meaning: "處所位置；職稱地位；尊敬量詞（一位）。", tip: "單人居左立直；右立字上點居中，底橫寬厚平坦。", words: [{ word: "座位", desc: "供人坐下歇息觀賽開會之指定席位位置。" }, { word: "位置", desc: "人事物在地圖空間中所處之具體座標方位。" }, { word: "地位", desc: "在社會組織或職級架構中所具有的身分名分。" }] },
+          { char: "護", zhuyin: "ㄏㄨˋ", meaning: "保護愛衛；照料看護病患傷患。", tip: "言旁讓左；右草頭下隹與又緊湊排列，結構密而不亂。", words: [{ word: "保護", desc: "盡力照顧防禦免受外界侵擾破壞傷害。" }, { word: "愛護", desc: "發自內心珍愛珍視並給予深切護衛。" }, { word: "守護", desc: "日夜常伴守候保護珍視之人事物。" }] },
+          { char: "應", zhuyin: "ㄧㄥ", meaning: "應當理當；答應響應；因應對應。", tip: "廣字頭開展覆頂；內佳字橫多均稱，下心穩正承載。", words: [{ word: "應該", desc: "按情理事理理所當然應當如此。" }, { word: "答應", desc: "開口承諾准允他人請求委託。" }, { word: "反應", desc: "受到刺激或外力作用時所即時顯現的表現反饋。" }] }
+        ]
+      },
+      {
+        id: 9,
+        title: "第九課",
+        characters: [
+          { char: "挑", zhuyin: "ㄊㄧㄠˇ", meaning: "以扁擔負物；撥動激惹；挑選甄拔。", tip: "提手立左；右兆字兩撇兩點左右均勻分佈展開。", words: [{ word: "挑戰", desc: "主動向艱難險阻或對手提出競技比賽角逐。" }, { word: "挑選", desc: "自眾多物件中挑出最佳最符合心意者。" }, { word: "挑水", desc: "以扁擔挑著水桶自水井挑運清泉。" }] },
+          { char: "戰", zhuyin: "ㄓㄢˋ", meaning: "戰爭搏鬥；競技角逐比賽；發抖顫慄。", tip: "左單字上下勻稱密集；右戈字斜橫長戈開展有力。", words: [{ word: "作戰", desc: "在戰場中調兵遣將與敵軍進行交鋒搏殺。" }, { word: "挑戰", desc: "勇於面對未知困難並嘗試征服克服之。" }, { word: "戰爭", desc: "國家集團間為爭奪利益訴諸武力之武裝衝突。" }] },
+          { char: "交", zhuyin: "ㄐㄧㄠ", meaning: "彼此相給予互通；結交朋友；交會交叉。", tip: "上亠橫平點立正中；下撇捺舒展大方互相交錯。", words: [{ word: "交換", desc: "將手中物件與他人互相交換轉移。" }, { word: "交流", desc: "兩地或團體間互相溝通經驗心得觀點。" }, { word: "交通", desc: "人車貨物經由道路鐵路往來流通之運輸系統。" }] },
+          { char: "隨", zhuyin: "ㄙㄨㄟˊ", meaning: "跟隨相隨；順應聽任；立刻隨即。", tip: "左耳旁（阝）緊立；右有字撇長，下走之底長平托底。", words: [{ word: "隨便", desc: "不加限制不拘小節；聽任自然。" }, { word: "隨著", desc: "跟隨伴隨著某種情勢狀態的發展轉變。" }, { word: "隨身", desc: "常帶在自己身邊身側，不離左右。" }] },
+          { char: "導", zhuyin: "ㄉㄠˇ", meaning: "指引引領；啟發教育開導；主導傳導。", tip: "上道字走之舒展；下寸字橫短豎鉤有力承接。", words: [{ word: "導演", desc: "在影視戲劇中主導演員排練拍攝之靈魂人物。" }, { word: "指導", desc: "本諸專業指點引導傳授正確方法。" }, { word: "領導", desc: "率領眾人前進之骨幹領袖與帶頭指揮。" }] },
+          { char: "鳳", zhuyin: "ㄈㄥˋ", meaning: "神話傳說中的百鳥之王瑞鳥（鳳凰）。", tip: "几框向內收束；內部鳥字橫平豎直筆畫整齊。", words: [{ word: "鳳凰", desc: "神話吉祥瑞獸，百鳥之王，象徵祥瑞太平。" }, { word: "鳳梨", desc: "盛產於臺灣南部香甜多汁的美味熱帶水果。" }] },
+          { char: "投", zhuyin: "ㄊㄡˊ", meaning: "拋出擲去；投寄寄託；投入投降。", tip: "提手旁讓位立左；右殳字橫折捺腳平實展開。", words: [{ word: "投球", desc: "用手臂力量將棒球或籃球向目標拋擲投出。" }, { word: "投籃", desc: "籃球運動中將球瞄準籃框投擲出手爭取得分。" }, { word: "投入", desc: "全神貫注全力以赴進入學習工作情境。" }] },
+          { char: "繼", zhuyin: "ㄐㄧˋ", meaning: "接續承續；繼承衣缽家業。", tip: "左糹旁讓位；右米字平整，下斤字垂直端正。", words: [{ word: "繼續", desc: "連續進行不中斷，接著做下去。" }, { word: "繼承", desc: "接續先祖前人事業遺產並發揚光大。" }] },
+          { char: "續", zhuyin: "ㄒㄩˋ", meaning: "連接延續；後續追加補充。", tip: "左糹旁；右賣字上方十下四點貝部井然有序。", words: [{ word: "持續", desc: "保持同一狀態長久不懈怠維持不絕。" }, { word: "手續", desc: "依規定必須辦理的各項行政審核流程步驟。" }, { word: "連續", desc: "一連串相繼發生不間斷。" }] },
+          { char: "岸", zhuyin: "ㄢˋ", meaning: "水邊陸地；水際河邊海岸。", tip: "山字頭居頂端正；下厂字平開，干字豎畫直直貫穿中心。", words: [{ word: "海岸", desc: "陸地與海洋浩瀚交會之邊界沿海地帶。" }, { word: "岸邊", desc: "緊鄰河川湖泊水面旁側之陸地邊緣。" }, { word: "河岸", desc: "河川兩旁綿延自然或人工築建之堤岸陸地。" }] },
+          { char: "淺", zhuyin: "ㄑㄧㄢˇ", meaning: "水深不大；時間短；學識不深深奧。", tip: "三點水立左；右戔字兩戈上下疊放，斜戈挺拔有神。", words: [{ word: "淺色", desc: "濃度淡薄明亮清淡的色調色彩。" }, { word: "深淺", desc: "水深厚度或顏色濃淡之高低差值度量。" }, { word: "淺水", desc: "水流不深一眼能望到底部水草碎石之水域。" }] },
+          { char: "沿", zhuyin: "ㄧㄢˊ", meaning: "順著水流或道路邊緣行走；依照成法。", tip: "三點水立左；右上几字短平，下口字平正端整。", words: [{ word: "沿著", desc: "順著道路或河岸邊界向前走前進。" }, { word: "沿岸", desc: "順著海岸或河岸兩側分佈延伸的廣大區帶。" }, { word: "沿路", desc: "順著前進步行的整條道路兩旁一路走來。" }] },
+          { char: "踩", zhuyin: "ㄘㄞˇ", meaning: "雙足用力踏在物體表面；踩踏踏踩。", tip: "足字旁底橫改提；右采字爪字頭下木字舒展。", words: [{ word: "踩踏", desc: "雙足用力踏步在地面或花草土壤上。" }, { word: "踩到", desc: "不經意間腳步踏著碰觸到異物髒汙。" }, { word: "踩高蹺", desc: "踩綁於長木長竹木桿上行進表演之民俗技藝。" }] },
+          { char: "疊", zhuyin: "ㄉㄧㄝˊ", meaning: "層層堆加積累；折疊收納整齊。", tip: "上三田排列整齊緊湊，下冖蓋頂且字平實穩健。", words: [{ word: "重疊", desc: "一層一層覆蓋堆疊交錯在一起。" }, { word: "堆疊", desc: "將眾多物品一件件向上整齊堆高疊起。" }, { word: "疊被子", desc: "清晨起床將睡棉被依順序整齊折疊收納。" }] },
+          { char: "般", zhuyin: "ㄅㄢ", meaning: "樣態模樣；如、好比一般樣式。", tip: "左舟字捺改短點讓位；右殳字橫折捺腳平實展開。", words: [{ word: "一般", desc: "普通平常；或好比某種情形一般模樣。" }, { word: "萬般", desc: "千種萬樣極為繁複之各種樣態滋味。" }, { word: "百般", desc: "用盡各種辦法或表現出諸般樣式關愛。" }] }
+        ]
+      },
+      {
+        id: 10,
+        title: "第十課",
+        characters: [
+          { char: "婚", zhuyin: "ㄏㄨㄣ", meaning: "男女結為夫妻合法的婚姻結合關係。", tip: "女字旁讓位立左；右昏字上氏下日字端莊居中。", words: [{ word: "結婚", desc: "男女雙方依法結成終身合法夫妻家庭之行為。" }, { word: "婚禮", desc: "慶祝新郎新娘締結良緣結為連理的隆重典禮。" }, { word: "訂婚", desc: "依照傳統古禮雙方預先約定婚約婚盟之儀式。" }] },
+          { char: "飾", zhuyin: "ㄕˋ", meaning: "裝潢美化修飾；飾物配件飾品。", tip: "飠字旁立左讓位；右巾字垂筆挺拔直立正中。", words: [{ word: "裝飾", desc: "在物品或空間點綴飾物使其增添美觀雅緻。" }, { word: "飾品", desc: "供個人佩戴打扮或室內擺飾的美化飾物。" }, { word: "服飾", desc: "包含衣裳帽子鞋襪飾品等整體穿戴穿搭。" }] },
+          { char: "郎", zhuyin: "ㄌㄤˊ", meaning: "新郎；古代對男子之美稱敬稱。", tip: "左良字點橫豎挑有勁；右耳旁（阝）彎鉤飽滿垂直。", words: [{ word: "新郎", desc: "新婚迎娶喜宴典禮中正式成婚的男主角。" }, { word: "令郎", desc: "尊稱稱呼他人之公子的客氣禮貌尊稱敬詞。" }] },
+          { char: "參", zhuyin: "ㄘㄢ", meaning: "參加參與；品評參照；人參補藥。", tip: "上厶下三個大字交錯，下三撇筆長短層次分明。", words: [{ word: "參加", desc: "親身加入某種團隊聚會賽事或活動行列。" }, { word: "參與", desc: "加入活動並在其中付出勞動承擔職務角色。" }, { word: "參觀", desc: "實地到現場觀覽了解展覽文資文物或風土民情。" }] },
+          { char: "響", zhuyin: "ㄒㄧㄤˇ", meaning: "聲音迴蕩震動；發出聲響；聲音宏大清脆。", tip: "上鄉字左右對稱緊實；下音字立日方整底盤平穩。", words: [{ word: "響亮", desc: "聲音清脆宏大傳播深遠振奮人心。" }, { word: "音響", desc: "播放音樂音訊之整套擴音高傳真喇叭設備。" }, { word: "影響", desc: "對人思想行為或事物發展產生左右之力度。" }] },
+          { char: "代", zhuyin: "ㄉㄞˋ", meaning: "代替替換；歷史世代時代；世系輩分。", tip: "單人立左；右弋字斜橫有力，斜戈挑筆帶點。", words: [{ word: "代表", desc: "受團體推舉指派代為發言或出面出席之人員。" }, { word: "現代", desc: "指現今當前生活之文明科技發達之時空環境。" }, { word: "時代", desc: "歷史發展上具有顯著特質特徵之宏大時期。" }] },
+          { char: "福", zhuyin: "ㄈㄨˊ", meaning: "吉祥福祉福分幸運；福氣。", tip: "示字旁立左讓位；右一口田上下疊合，方正勻整。", words: [{ word: "幸福", desc: "身心感受平安溫暖美滿充實的快樂狀態。" }, { word: "祝福", desc: "真誠祝願祈求他人平安順遂喜樂吉祥。" }, { word: "福祉", desc: "為大眾爭取獲得的各項實質福利與幸福生活。" }] },
+          { char: "連", zhuyin: "ㄌㄧㄢˊ", meaning: "連接相接；連續不絕；甚至連同。", tip: "走之底平舒舒坦；內車字兩橫平豎直立中軸。", words: [{ word: "連忙", desc: "不敢有片刻遲延，急忙迅速地去做某事。" }, { word: "連續", desc: "接連相接毫無中斷中斷之現象。" }, { word: "相連", desc: "彼此彼此緊緊依靠互相銜接結合在一起。" }] },
+          { char: "酒", zhuyin: "ㄐㄧㄡˇ", meaning: "糧食果實發酵釀製成含酒精之芳香飲品。", tip: "三點水在左；右酉字方框勻整，內兩橫平正。", words: [{ word: "紅酒", desc: "新鮮紅葡萄釀造之紫紅色芳醇葡萄酒品。" }, { word: "白酒", desc: "穀物發酵蒸餾而成之透明烈性美酒。" }, { word: "酒席", desc: "宴請賓客好友備有豐盛菜餚之筵席餐聚。" }] },
+          { char: "敬", zhuyin: "ㄐㄧㄥˋ", meaning: "尊敬敬重；態度端肅恭敬；敬獻敬禮。", tip: "左苟字草頭句字緊湊；右攵反文撇捺大方。", words: [{ word: "敬佩", desc: "發自內心深切欽佩崇敬他人的德行能力。" }, { word: "尊敬", desc: "對尊長賢者表現出極有教養的恭敬態度。" }, { word: "敬禮", desc: "行使軍禮或鞠躬禮節表達至誠敬意之動作。" }] },
+          { char: "藏", zhuyin: "ㄘㄤˊ", meaning: "隱蔽遮匿；儲存收藏；深藏不露。", tip: "草字頭橫開；內各部筆畫繁複，右戈長伸保平衡。", words: [{ word: "隱藏", desc: "躲藏遮蔽在角落不輕易顯露於外表外在。" }, { word: "捉迷藏", desc: "蒙眼或尋找躲藏夥伴之傳統童趣追逐遊戲。" }, { word: "收藏", desc: "珍惜珍愛珍藏並妥善儲存珍貴文物藝術品。" }] },
+          { char: "俗", zhuyin: "ㄙㄨˊ", meaning: "風俗民間習慣；通俗大眾；凡庸平庸俗氣。", tip: "單人居左立直；右谷字上八下口端平整正。", words: [{ word: "風俗", desc: "特定地域或民族長年約定俗成的生活習慣。" }, { word: "習俗", desc: "代代相傳形成的社會行為習慣規範。" }, { word: "俗話", desc: "民間口耳相傳簡明深刻具智慧之諺語俗語。" }] },
+          { char: "惜", zhuyin: "ㄒㄧˊ", meaning: "愛惜珍惜憐惜；捨不得感到可惜。", tip: "左豎心旁兩點相應；右昔字上廿下日勻稱平整。", words: [{ word: "珍惜", desc: "深切知道難得珍貴而倍加珍視保護善待。" }, { word: "可惜", desc: "本應圓滿美好卻生憾事令人惋惜不捨。" }, { word: "愛惜", desc: "珍惜愛護資源身體與物件不隨意揮霍浪費。" }] },
+          { char: "互", zhuyin: "ㄏㄨˋ", meaning: "交互互相；彼此相通往來互助。", tip: "上橫下橫平行長展，中間折撇交錯勾心咬合。", words: [{ word: "互相", desc: "雙方彼此互為對象給予相應之關懷協助互動。" }, { word: "交互", desc: "彼此輪流交替進行或相互影響作用。" }, { word: "互動", desc: "雙方溝通對談交流產生心靈上的情感反饋。" }] },
+          { char: "精", zhuyin: "ㄐㄧㄥ", meaning: "提煉後的純美部分；精靈神怪；精神充沛。", tip: "左米字方正讓位；右青字上三橫平行，下月整齊。", words: [{ word: "精靈", desc: "童話神話中活潑機靈具神奇力量之奇幻生靈。" }, { word: "精神", desc: "人的思維情緒意志活力表現；生氣蓬勃。" }, { word: "精彩", desc: "演出表演比賽格外生動活潑，令人嘆為觀止。" }] }
+        ]
+      },
+      {
+        id: 11,
+        title: "第十一課",
+        characters: [
+          { char: "除", zhuyin: "ㄔㄨˊ", meaning: "掃除除去；算術除法；除了…之外。", tip: "左耳旁（阝）立直；右余字人字大展，木直點收。", words: [{ word: "除法", desc: "算術四則運算中基於等分整除運算之計算法則。" }, { word: "掃除", desc: "清掃掃除房間環境之灰塵污漬垃圾污垢。" }, { word: "去除", desc: "除去排除不需要之雜質阻礙或污點。" }] },
+          { char: "嬸", zhuyin: "ㄕㄣˇ", meaning: "稱叔父的妻子；尊稱年長婦女。", tip: "女字旁讓位立左；右審字寶蓋覆頂，申平正。", words: [{ word: "大嬸", desc: "對鄉里純樸親切之中年年長婦女之親暱稱呼。" }, { word: "嬸嬸", desc: "家族稱謂，專門尊稱叔叔之法定妻子配偶。" }] },
+          { char: "煙", zhuyin: "ㄧㄢ", meaning: "物質燃燒產生的煙氣氣體；煙火香煙。", tip: "火字旁讓位於左；右西土排列勻稱方平端整。", words: [{ word: "煙火", desc: "節慶慶典施放空中綻放五彩斑斕之璀璨煙火。" }, { word: "抽煙", desc: "點燃吸吮香煙煙草之不良危害健康之習慣。" }, { word: "濃煙", desc: "火災或燃燒產生濃黑嗆人密不通風之厚重煙霧。" }] },
+          { char: "陣", zhuyin: "ㄓㄣˋ", meaning: "行軍戰鬥陣容佈局；短暫時間（一陣）。", tip: "左耳旁（阝）長挺；右車字橫平豎直立正中線。", words: [{ word: "一陣風", desc: "在短暫片刻時間呼嘯吹拂吹過的強風微風。" }, { word: "陣地", desc: "軍隊在作戰時據守構築工事之要地陣營。" }, { word: "陣雨", desc: "突發而降且短暫片刻隨即驟止之午後對流雷雨。" }] },
+          { char: "附", zhuyin: "ㄈㄨˋ", meaning: "靠近接近附近；依附附帶；增加附加。", tip: "左耳旁垂直垂挺；右付字單人依寸，結構緊密。", words: [{ word: "附近", desc: "距離本處極為鄰近不遠的周邊生活環境區域。" }, { word: "附加", desc: "在原有基礎主體上額外再增添補充進去。" }, { word: "依附", desc: "附著依靠在強大主體身邊獲取生存庇護。" }] },
+          { char: "店", zhuyin: "ㄉㄧㄢˋ", meaning: "買賣交易貨物的商店店舖；旅舍客棧。", tip: "廣字頭開展有度；內占字豎直，口平正承托在底。", words: [{ word: "商店", desc: "陳設各項生活百貨用品供顧客選購之零售店舖。" }, { word: "店家", desc: "經營零售買賣之商店主人老闆業者。" }, { word: "開店", desc: "開創設立新的商號店面正式開門營運。" }] },
+          { char: "休", zhuyin: "ㄒㄧㄡ", meaning: "歇息停止活動；休假不工作；停止。", tip: "人依倚在木樹身側，單人立左木字舒展於右。", words: [{ word: "休息", desc: "暫時放下繁重工作勞動，使體力精神得以復原。" }, { word: "休假", desc: "在法定公休假期日不需上班上學上課。" }, { word: "休學", desc: "學生因故暫時停止在校課業學籍保留學歷。" }] },
+          { char: "息", zhuyin: "ㄒㄧˊ", meaning: "呼吸氣流氣息；休息休止；消息音訊。", tip: "上自字窄長端平；下心字三點對稱穩固底盤。", words: [{ word: "消息", desc: "外界傳遞而來最新之事件情報資訊動態。" }, { word: "休息", desc: "身心放鬆放下勞動歇息平復精神。" }, { word: "氣息", desc: "人體吸納呼出之溫熱氣息呼吸聲調。" }] },
+          { char: "修", zhuyin: "ㄒㄧㄡ", meaning: "維修修補整理；修習研讀；涵養品德。", tip: "左邊單人豎短；中攴折順，右三撇層次分明。", words: [{ word: "修理", desc: "將故障磨損損毀之器物重新整飾復原良善。" }, { word: "修建", desc: "重新修繕構築建築橋樑道路。" }, { word: "維修", desc: "定時檢驗檢查保養維護儀器設備運行。" }] },
+          { char: "廠", zhuyin: "ㄔㄤˇ", meaning: "聚集大量機械工人進行加工生產之場所。", tip: "厂字頭平展寬長；內敞字尚敞排列得體端嚴。", words: [{ word: "工廠", desc: "集中機械生產線大量製造各項產品之生產場所。" }, { word: "廠房", desc: "工廠內部設立設備進行工業製造之大跨距建築。" }, { word: "車廠", desc: "專門檢測維修保養更換汽車零件之專業修車廠。" }] },
+          { char: "檢", zhuyin: "ㄐㄧㄢˇ", meaning: "查驗審視檢驗；反省檢討約束。", tip: "左木字捺縮長點；右僉字人展大方，下部端莊整嚴。", words: [{ word: "檢查", desc: "審慎仔細查看檢核有無缺失紕漏或故障病症。" }, { word: "檢驗", desc: "本諸科學規範進行數據驗證測試品質標準。" }, { word: "檢討", desc: "反省自身過失缺失以謀求往後能改進進步。" }] },
+          { char: "查", zhuyin: "ㄔㄚˊ", meaning: "考驗審查；調查找尋尋訪翻閱。", tip: "上木字橫長撇捺開展；下旦字日平正底橫厚實。", words: [{ word: "調查", desc: "深入現場查訪蒐集事實證據追查真相。" }, { word: "查找", desc: "在書本字典或電腦資料庫中翻閱尋覓解答。" }, { word: "巡查", desc: "在管轄責任防區之道路走訪巡視防範未然。" }] },
+          { char: "托", zhuyin: "ㄊㄨㄛ", meaning: "手掌承舉托起；拜託委託照顧。", tip: "提手立左；右乇字短撇向左，豎彎鉤向右舒展。", words: [{ word: "拜托", desc: "懇請請求他人熱心給予相助或關照之客氣詞語。" }, { word: "托兒所", desc: "專供日間代為照料看護照顧幼小幼兒之機構。" }, { word: "托運", desc: "委託貨運航空運輸單位運送行李貨物。" }] },
+          { char: "幸", zhuyin: "ㄒㄧㄥˋ", meaning: "吉利幸運沒有災禍；感到高興榮幸。", tip: "上土字橫長豎直；下干字平穩，間距勻整。", words: [{ word: "幸福", desc: "生活平安健康美滿獲得溫暖滋養之美好境遇。" }, { word: "幸運", desc: "碰逢意想不到的良機好運逢凶化吉。" }, { word: "榮幸", desc: "承蒙他人盛情邀約尊重而備感榮耀光彩。" }] },
+          { char: "零", zhuyin: "ㄌㄧㄥˊ", meaning: "數字零（0）；細碎分散零星不完整。", tip: "雨字頭覆蓋；下令字點撇舒放，整齊清爽。", words: [{ word: "零件", desc: "組合大型機器設備所必備之各項細碎元件零件。" }, { word: "零食", desc: "正餐之間閒暇品嚐之糖果餅乾可口小零嘴。" }, { word: "零錢", desc: "面額細小方便找零買小物件之銅板銅錢硬幣。" }] }
+        ]
+      },
+      {
+        id: 12,
+        title: "第十二課",
+        characters: [
+          { char: "團", zhuyin: "ㄊㄨㄢˊ", meaning: "匯聚凝聚成圓形或團體；全體集合。", tip: "大囗框方挺厚實；內專字橫平豎直安排緊緻。", words: [{ word: "團隊", desc: "為同一奮鬥目標同心協力組織成之群體隊伍。" }, { word: "團結", desc: "大家團結互助心連心毫無隔閡凝聚一心。" }, { word: "團圓", desc: "中秋除夕在外親人返鄉歡聚一堂圓融幸福。" }] },
+          { char: "剩", zhuyin: "ㄕㄥˋ", meaning: "多出來未用盡的；殘留剩餘。", tip: "左乘字撇捺分明挺立；右立刀（刂）兩豎利落垂直。", words: [{ word: "剩下", desc: "在消耗使用之後所多出來剩餘留存的部分。" }, { word: "剩餘", desc: "結餘剩餘多出來的部分價值或物資。" }, { word: "剩菜", desc: "正餐用畢後多餘留待下餐食用之佳餚菜品。" }] },
+          { char: "默", zhuyin: "ㄇㄛˋ", meaning: "不言語不出聲；幽默滑稽趣味。", tip: "左黑字四點水底勻稱；右犬字大字立起撇捺有力。", words: [{ word: "沉默", desc: "閉口不發一語安靜深沉沈靜不說話。" }, { word: "默默", desc: "在暗中不為人知地低調付出奉獻或安靜努力。" }, { word: "幽默", desc: "言行談吐灰諧有趣令人莞爾一笑之風趣品格。" }] },
+          { char: "樓", zhuyin: "ㄌㄡˊ", meaning: "兩層以上之高大房屋建築樓房。", tip: "左木字捺改點讓位；右婁字上串中米下女勻稱平衡。", words: [{ word: "大樓", desc: "多層層疊拔地而起之現代化大型鋼筋建築。" }, { word: "樓梯", desc: "供人一步一階上下穿梭各樓層之階梯踏板。" }, { word: "高樓", desc: "矗立高聳入雲之高層建築高樓大廈。" }] },
+          { char: "視", zhuyin: "ㄕˋ", meaning: "以眼觀察觀看；檢視重視；視覺感官。", tip: "左示字旁點挑得體；右見字豎直豎彎鉤大器舒展。", words: [{ word: "視覺", desc: "眼睛感光細胞辨識光線顏色形狀的視覺感官功能。" }, { word: "近視", desc: "眼球屈光異常看不清遠處景物之視力現象。" }, { word: "電視", desc: "接收電視訊號播映影音節目之家電顯示器螢幕。" }] },
+          { char: "訊", zhuyin: "ㄒㄩㄣˋ", meaning: "傳達通報之消息訊息；查問通訊。", tip: "左言旁立直；右十字筆平豎直，交接端正有力。", words: [{ word: "通訊", desc: "利用電波網路互相傳遞資訊影音消息之系統。" }, { word: "資訊", desc: "經由系統整合歸納具參考利用價值之消息情報。" }, { word: "訊息", desc: "手機簡訊或社群軟體即時傳送之文字叮嚀消息。" }] },
+          { char: "叔", zhuyin: "ㄕㄨˊ", meaning: "父親的弟弟（叔父）；尊稱同輩男性友人。", tip: "上小下又字橫撇舒展；中短豎垂直挺拔。", words: [{ word: "叔叔", desc: "稱謂，尊稱父親的弟弟；亦泛稱年長成年男性。" }, { word: "大叔", desc: "對年長和藹純樸成年男士之親切俗稱稱呼。" }, { word: "表叔", desc: "父親表兄弟之親屬家族稱謂代稱敬稱。" }] },
+          { char: "鏡", zhuyin: "ㄐㄧㄥˋ", meaning: "能反照映射影像之平整光潔器皿；光學眼鏡。", tip: "左金長捺變提；右竟字音立日方正平直承接。", words: [{ word: "眼鏡", desc: "佩戴於眼鼻梁上用以矯正視力焦點之光學鏡片。" }, { word: "鏡子", desc: "鍍水銀金屬可清晰映照個人容貌裝扮之玻璃鏡面。" }, { word: "望遠鏡", desc: "利用多重凸凹透鏡組合放遠眺望遠方風景之儀器。" }] },
+          { char: "逗", zhuyin: "ㄉㄡˋ", meaning: "逗引招引取笑；停留逗留；風趣有趣。", tip: "走之底平坦舒放；內豆字橫平豎直，口部扁平端莊。", words: [{ word: "逗弄", desc: "以言語或玩具引動幼童或寵物玩耍開心。" }, { word: "逗笑", desc: "用風趣幽默言語舉動引人捧腹大笑開懷。" }, { word: "逗趣", desc: "滑稽可愛風趣幽默，極具童趣討喜的樣態。" }] },
+          { char: "娃", zhuyin: "ㄨㄚˊ", meaning: "小孩幼童；玩偶洋娃娃。", tip: "女字旁讓位立左；右圭字由上下兩土字疊立而成。", words: [{ word: "娃娃", desc: "指初生幼兒小寶貝；亦指玩具布偶洋娃娃。" }, { word: "女娃", desc: "活潑伶俐可愛的小女孩兒女童。" }, { word: "泥娃娃", desc: "以黏土捏塑成型燒製彩繪之小泥人玩偶。" }] },
+          { char: "壓", zhuyin: "ㄧㄚ", meaning: "自上方施力由上往下壓制；逼迫壓迫。", tip: "厂字頭寬長覆頂；內厭字橫撇長，下土平穩保重心。", words: [{ word: "壓力", desc: "物體單位面積承受之力度；心靈承擔之緊繃沉重感。" }, { word: "壓住", desc: "用重物死死壓住使其動彈不得穩住不再移動。" }, { word: "壓扁", desc: "遭受沉重巨大外力擠壓而變形壓成扁平片狀。" }] },
+          { char: "錢", zhuyin: "ㄑㄧㄢˊ", meaning: "交易貨物充作等價交換之金屬貨幣、紙鈔。", tip: "左金旁長捺變長提；右戔字兩戈上下疊放，斜戈挺拔。", words: [{ word: "金錢", desc: "作為商品交易衡量標準媒介之法定貨幣財富。" }, { word: "錢包", desc: "隨身攜帶盛裝紙鈔證件硬幣之小皮匣包袋。" }, { word: "零錢", desc: "日常搭車購物找零使用之小面額金屬硬幣。" }] },
+          { char: "透", zhuyin: "ㄊㄡˋ", meaning: "穿過透視通過；通透明澈透亮；顯露透漏。", tip: "走之底長平托底；內秀字禾字撇平，乃字順暢圓折。", words: [{ word: "透明", desc: "光線能完整無阻礙穿透，晶瑩剔透一覽無遺。" }, { word: "穿透", desc: "如光線射線或銳利物體直接穿透物體表面。" }, { word: "透徹", desc: "對學問事理理解得極為精準徹底明白通達。" }] },
+          { char: "握", zhuyin: "ㄨㄛˋ", meaning: "五指屈攏持抱物體；掌握掌控掌權。", tip: "提手旁讓位立左；右屋字尸字頭平開，下至字端莊穩重。", words: [{ word: "掌握", desc: "以手握持抓住；充分掌控主持大局與情勢關鍵。" }, { word: "握手", desc: "雙方見面禮貌互相伸手相握表示友好歡迎。" }, { word: "握緊", desc: "五指用力緊緊抓住掌握不輕易鬆脫脫落。" }] }
+        ]
+      }
+    ];
+
+    let currentLessonId = 1;
+    let currentWordIndex = 0;
+    let writerInstance = null;
+    let moeWriterInstance = null;
+    let isLooping = false;
+    let isShowOutline = true;
+    let currentSpeed = 1.0;
+    let isQuizActive = false;
+    let currentMode = 'hanzi';
+    let moeCurrentStroke = 0;
+    let moeTotalStrokes = 0;
+    let activeWordObj = null;
+
+    const lessonSelect = document.getElementById('lesson-select');
+    const writerTarget = document.getElementById('writer-target');
+    const moeViewTarget = document.getElementById('moe-view-target');
+    const pillsContainer = document.getElementById('character-pills-container');
+
+    const tabHanziMode = document.getElementById('tab-hanzi-mode');
+    const tabMoeMode = document.getElementById('tab-moe-mode');
+    const controlsHanzi = document.getElementById('controls-hanzi');
+    const controlsMoe = document.getElementById('controls-moe');
+    const btnMoePlay = document.getElementById('btn-moe-play');
+    const btnMoeStep = document.getElementById('btn-moe-step');
+    const btnMoeStepText = document.getElementById('btn-moe-step-text');
+    const btnMoeReset = document.getElementById('btn-moe-reset');
+
+    const statusCard = document.getElementById('status-card');
+    const statusTitle = document.getElementById('status-title');
+    const statusMessage = document.getElementById('status-message');
+    const strokeCounterBadge = document.getElementById('stroke-counter-badge');
+    const strokeProgressText = document.getElementById('stroke-progress-text');
+
+    const detailChar = document.getElementById('detail-char');
+    const detailZhuyin = document.getElementById('detail-zhuyin');
+    const detailLessonBadge = document.getElementById('detail-lesson-badge');
+    const detailCharMeaning = document.getElementById('detail-char-meaning');
+    const detailWordsContainer = document.getElementById('detail-words-container');
+    const detailTips = document.getElementById('detail-tips');
+    const bgCharWatermark = document.getElementById('bg-char-watermark');
+
+    const wordDetailPanel = document.getElementById('word-detail-panel');
+    const panelWordTitle = document.getElementById('panel-word-title');
+    const panelWordDesc = document.getElementById('panel-word-desc');
+    const btnPanelSpeak = document.getElementById('btn-panel-speak');
+    const btnPanelClose = document.getElementById('btn-panel-close');
+
+    const btnAnimate = document.getElementById('btn-animate');
+    const btnLoop = document.getElementById('btn-loop');
+    const btnLoopText = document.getElementById('btn-loop-text');
+    const btnQuiz = document.getElementById('btn-quiz');
+    const btnReset = document.getElementById('btn-reset');
+    const btnToggleOutline = document.getElementById('btn-toggle-outline');
+    const textToggleOutline = document.getElementById('text-toggle-outline');
+
+    const btnPrevChar = document.getElementById('btn-prev-char');
+    const btnNextChar = document.getElementById('btn-next-char');
+    const btnReadCharacter = document.getElementById('btn-read-character');
+    const btnOpenMoeNewTab = document.getElementById('btn-open-moe-newtab');
+    const charDisplayBadge = document.getElementById('char-display-badge');
+
+    // 專屬發音函式：雙字詞加入微空格與降速，達到自然清晰字距
+    function speakText(text) {
+      if (!('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+      
+      let clean = text.trim();
+      if (PRONUNCIATION_FIXES[clean]) {
+        clean = PRONUNCIATION_FIXES[clean];
+      }
+
+      let isMultiWord = clean.length >= 2;
+      // 關鍵：在字與字之間加入半形空格，創造 120ms 自然字間停頓，結尾加句號保護尾音
+      let spokenText = isMultiWord ? clean.split('').join(' ') + '。' : clean + '。';
+
+      const utterance = new SpeechSynthesisUtterance(spokenText);
+      utterance.lang = 'zh-TW';
+      // 雙字詞速度放慢至 0.68，單字 0.72，教學聆聽最清晰
+      utterance.rate = isMultiWord ? 0.68 : 0.72;
+      utterance.pitch = 1.22;
+      utterance.volume = 1.0;
+
+      const voices = window.speechSynthesis.getVoices();
+      const twFemaleVoice = voices.find(v => 
+        (v.lang === 'zh-TW' || v.lang === 'cmn-Hant-TW' || v.lang.includes('TW')) &&
+        (v.name.includes('HsiaoChen') || v.name.includes('Yating') || v.name.includes('Mei-Jia') || 
+         v.name.includes('HanHan') || v.name.includes('Sin-Ji') || v.name.includes('臺灣女') || v.name.includes('Female'))
+      ) || voices.find(v => 
+        (v.lang === 'zh-TW' || v.lang.includes('TW')) && 
+        !v.name.includes('Danny') && !v.name.includes('YunJhe') && !v.name.includes('Male')
+      );
+
+      if (twFemaleVoice) {
+        utterance.voice = twFemaleVoice;
+      }
+      
+      window.speechSynthesis.speak(utterance);
+    }
+
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.onvoiceschanged = () => {
+        window.speechSynthesis.getVoices();
+      };
+    }
+
+    function renderVerticalZhuyin(zhuyinStr) {
+      if (!zhuyinStr) return '';
+      const str = zhuyinStr.trim();
+      const isLightTone = str.includes('˙') || str.includes('•') || str.includes('·');
+      const bodyChars = str.replace(/[ˊˇˋ˙•·\s]/g, '').split('');
+      let toneMark = '';
+      if (str.includes('ˊ')) toneMark = 'ˊ';
+      else if (str.includes('ˇ')) toneMark = 'ˇ';
+      else if (str.includes('ˋ')) toneMark = 'ˋ';
+
+      return `
+        <div class="inline-flex items-center justify-center font-serif select-none py-0.5">
+          <div class="flex flex-col items-center justify-center">
+            ${isLightTone ? '<span class="text-xs text-rose-600 font-bold mb-0.5 leading-none">˙</span>' : ''}
+            <div class="flex flex-col items-center justify-center space-y-0.5">
+              ${bodyChars.map(c => `<span class="text-xl sm:text-2xl font-bold text-slate-800 leading-none font-serif">${c}</span>`).join('')}
+            </div>
+          </div>
+          <div class="w-3 flex flex-col justify-end items-start ml-1 self-stretch pb-0.5">
+            ${toneMark ? `<span class="text-base sm:text-lg font-bold text-rose-600 leading-none font-serif">${toneMark}</span>` : ''}
+          </div>
+        </div>
+      `;
+    }
+
+    function updateStatus(type, title, message, currentStroke = null, totalStrokes = null) {
+      if (statusTitle) statusTitle.textContent = title;
+      if (statusMessage) statusMessage.textContent = message;
+
+      if (strokeCounterBadge && strokeProgressText) {
+        if (currentStroke !== null && totalStrokes !== null) {
+          strokeCounterBadge.classList.remove('hidden');
+          strokeProgressText.textContent = `${currentStroke}/${totalStrokes}`;
+        } else {
+          strokeCounterBadge.classList.add('hidden');
+        }
+      }
+    }
+
+    function initHanziWriter(character) {
+      if (!character) return;
+      isLooping = false;
+      isQuizActive = false;
+      if (btnLoopText) btnLoopText.textContent = '循環播放';
+
+      writerTarget.innerHTML = '';
+      const size = 320;
+
+      try {
+        writerInstance = HanziWriter.create('writer-target', character, {
+          width: size,
+          height: size,
+          padding: 24,
+          showOutline: isShowOutline,
+          strokeAnimationSpeed: currentSpeed,
+          delayBetweenStrokes: 130,
+          strokeColor: '#1d4ed8',
+          radicalColor: '#0284c7',
+          outlineColor: '#cbd5e1',
+          drawingColor: '#ea580c',
+          drawingWidth: 16,
+          showHintAfterMisses: 2,
+          highlightOnComplete: true,
+          highlightColor: '#2563eb'
+        });
+
+        if (currentMode === 'hanzi') {
+          updateStatus('ready', '互動手寫模式', `當前生字：「${character}」，純田字格已就緒！`);
+        }
+      } catch (err) {
+        console.error('HanziWriter init error:', err);
+      }
+    }
+
+    function initMoeWriter(character) {
+      if (!character) return;
+      moeViewTarget.innerHTML = '';
+      moeCurrentStroke = 0;
+      const size = 320;
+
+      try {
+        moeWriterInstance = HanziWriter.create('moe-view-target', character, {
+          width: size,
+          height: size,
+          padding: 24,
+          showOutline: true,
+          strokeAnimationSpeed: 0.9,
+          delayBetweenStrokes: 160,
+          strokeColor: '#b45309',
+          radicalColor: '#d97706',
+          outlineColor: '#e2e8f0',
+          highlightColor: '#f59e0b',
+          onLoadCharDataSuccess: function(data) {
+            moeTotalStrokes = data.strokes.length;
+            updateStatus('writing', '教育部標準筆順模式', `「${character}」字（共 ${moeTotalStrokes} 畫），可點擊「播放全字筆順」或「分步下一筆」！`, 0, moeTotalStrokes);
+          }
+        });
+      } catch (err) {
+        console.error('MoeWriter init error:', err);
+      }
+    }
+
+    function switchMode(mode) {
+      currentMode = mode;
+      const data = getCurrentCharData();
+
+      if (mode === 'hanzi') {
+        tabHanziMode.className = 'flex-1 py-1.5 rounded-lg bg-white text-indigo-900 border border-slate-300 transition font-bold';
+        tabMoeMode.className = 'flex-1 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition font-medium';
+
+        writerTarget.style.display = 'flex';
+        moeViewTarget.style.display = 'none';
+        controlsHanzi.classList.remove('hidden');
+        controlsMoe.classList.add('hidden');
+
+        initHanziWriter(data.char);
+      } else {
+        tabMoeMode.className = 'flex-1 py-1.5 rounded-lg bg-white text-amber-900 border border-amber-300 transition font-bold';
+        tabHanziMode.className = 'flex-1 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition font-medium';
+
+        writerTarget.style.display = 'none';
+        moeViewTarget.style.display = 'flex';
+        controlsHanzi.classList.add('hidden');
+        controlsMoe.classList.remove('hidden');
+
+        initMoeWriter(data.char);
+      }
+    }
+
+    tabHanziMode.onclick = () => switchMode('hanzi');
+    tabMoeMode.onclick = () => switchMode('moe');
+
+    btnMoePlay.onclick = () => {
+      if (!moeWriterInstance) return;
+      const data = getCurrentCharData();
+      moeCurrentStroke = moeTotalStrokes;
+      updateStatus('writing', '播放標準筆順中', `正在自動演示「${data.char}」字標準筆順運筆～`, moeTotalStrokes, moeTotalStrokes);
+      moeWriterInstance.animateCharacter({
+        onComplete: function() {
+          updateStatus('ready', '播放完成', `「${data.char}」字全字標準筆順演示完畢！`, moeTotalStrokes, moeTotalStrokes);
+        }
+      });
+    };
+
+    btnMoeStep.onclick = () => {
+      if (!moeWriterInstance) return;
+      const data = getCurrentCharData();
+
+      if (moeCurrentStroke >= moeTotalStrokes) {
+        moeCurrentStroke = 0;
+        moeWriterInstance.hideCharacter();
+        moeWriterInstance.showOutline();
+      }
+
+      moeWriterInstance.animateStroke(moeCurrentStroke, {
+        onComplete: function() {
+          moeCurrentStroke++;
+          updateStatus('writing', '分步示範進行中', `已演示至「${data.char}」字第 ${moeCurrentStroke} 筆，請點擊「分步下一筆」繼續！`, moeCurrentStroke, moeTotalStrokes);
+          if (btnMoeStepText) {
+            btnMoeStepText.textContent = (moeCurrentStroke < moeTotalStrokes) ? `⏭ 分步 (${moeCurrentStroke}/${moeTotalStrokes})` : '🔄 重新分步';
+          }
+        }
+      });
+    };
+
+    btnMoeReset.onclick = () => {
+      if (!moeWriterInstance) return;
+      const data = getCurrentCharData();
+      moeCurrentStroke = 0;
+      moeWriterInstance.hideCharacter();
+      moeWriterInstance.showOutline();
+      if (btnMoeStepText) btnMoeStepText.textContent = '⏭ 分步下一筆';
+      updateStatus('writing', '已重設田字格', `「${data.char}」字田字格已恢復初始狀態，可開始練習。`, 0, moeTotalStrokes);
+    };
+
+    function populateLessonDropdown() {
+      lessonSelect.innerHTML = '';
+      LESSONS_DATABASE.forEach(lesson => {
+        const opt = document.createElement('option');
+        opt.value = lesson.id;
+        opt.textContent = `${lesson.title} (${lesson.characters.length}字)`;
+        lessonSelect.appendChild(opt);
+      });
+
+      lessonSelect.value = currentLessonId;
+      lessonSelect.onchange = (e) => {
+        currentLessonId = parseInt(e.target.value, 10);
+        currentWordIndex = 0;
+        renderPills();
+        loadCurrentCharacter();
+      };
+    }
+
+    function getCurrentLesson() {
+      return LESSONS_DATABASE.find(l => l.id === currentLessonId) || LESSONS_DATABASE[0];
+    }
+
+    function getCurrentCharData() {
+      const lesson = getCurrentLesson();
+      return lesson.characters[currentWordIndex] || lesson.characters[0];
+    }
+
+    function renderPills() {
+      pillsContainer.innerHTML = '';
+      const lesson = getCurrentLesson();
+
+      lesson.characters.forEach((item, index) => {
+        const btn = document.createElement('button');
+        const isActive = index === currentWordIndex;
+        btn.className = `flex-shrink-0 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl border transition-all ${
+          isActive 
+            ? 'bg-indigo-800 text-white border-indigo-900 font-bold ring-2 ring-indigo-300'
+            : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100 hover:border-indigo-400 font-medium'
+        }`;
+
+        const zhuyinStr = (item.zhuyin || "").trim();
+        const isLightTone = zhuyinStr.includes('˙') || zhuyinStr.includes('•') || zhuyinStr.includes('·');
+        const bodyChars = zhuyinStr.replace(/[ˊˇˋ˙•·\s]/g, '').split('');
+        let toneMark = '';
+        if (zhuyinStr.includes('ˊ')) toneMark = 'ˊ';
+        else if (zhuyinStr.includes('ˇ')) toneMark = 'ˇ';
+        else if (zhuyinStr.includes('ˋ')) toneMark = 'ˋ';
+
+        const toneColorClass = isActive ? 'text-amber-300' : 'text-rose-600';
+        const bodyColorClass = isActive ? 'text-indigo-100' : 'text-slate-600';
+
+        btn.innerHTML = `
+          <span class="text-base sm:text-lg font-serif font-bold leading-none">${item.char}</span>
+          <div class="inline-flex items-center justify-center font-serif select-none text-[10px] leading-none pl-0.5">
+            <div class="flex flex-col items-center justify-center">
+              ${isLightTone ? `<span class="${toneColorClass} font-bold leading-none mb-0.5 text-[8px]">˙</span>` : ''}
+              <div class="flex flex-col items-center justify-center space-y-[1px]">
+                ${bodyChars.map(c => `<span class="${bodyColorClass} font-bold leading-none">${c}</span>`).join('')}
+              </div>
+            </div>
+            <div class="w-1.5 flex flex-col justify-end items-start ml-0.5 self-stretch">
+              ${toneMark ? `<span class="${toneColorClass} font-bold leading-none text-[9px]">${toneMark}</span>` : ''}
+            </div>
+          </div>
+        `;
+        btn.onclick = () => {
+          if (currentWordIndex !== index) {
+            currentWordIndex = index;
+            renderPills();
+            loadCurrentCharacter();
+          }
+        };
+        pillsContainer.appendChild(btn);
+      });
+
+      const activeElement = pillsContainer.children[currentWordIndex];
+      if (activeElement) {
+        activeElement.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      }
+    }
+
+    function openWordDetail(wordItem) {
+      activeWordObj = wordItem;
+      panelWordTitle.textContent = wordItem.word;
+      panelWordDesc.textContent = wordItem.desc || "教育部國語辭典簡編本釋義。";
+      wordDetailPanel.classList.remove('hidden');
+
+      const buttons = detailWordsContainer.querySelectorAll('button');
+      buttons.forEach(btn => {
+        if (btn.getAttribute('data-word') === wordItem.word) {
+          btn.className = 'flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-teal-800 text-white border border-teal-900 transition text-xs font-medium font-serif';
+        } else {
+          btn.className = 'flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 transition text-xs font-medium';
+        }
+      });
+      speakText(wordItem.word);
+    }
+
+    btnPanelClose.onclick = () => {
+      wordDetailPanel.classList.add('hidden');
+      const buttons = detailWordsContainer.querySelectorAll('button');
+      buttons.forEach(btn => {
+        btn.className = 'flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 transition text-xs font-medium';
+      });
+    };
+
+    btnPanelSpeak.onclick = () => {
+      if (activeWordObj) {
+        speakText(activeWordObj.word);
+      }
+    };
+
+    function loadCurrentCharacter() {
+      const lesson = getCurrentLesson();
+      const data = getCurrentCharData();
+      if (!data) return;
+
+      if (detailChar) detailChar.textContent = data.char;
+      if (bgCharWatermark) bgCharWatermark.textContent = data.char;
+      if (detailZhuyin) detailZhuyin.innerHTML = renderVerticalZhuyin(data.zhuyin);
+      if (detailLessonBadge) detailLessonBadge.textContent = `${lesson.title}`;
+
+      if (detailCharMeaning) {
+        detailCharMeaning.textContent = data.meaning || "請參閱教育部國語辭典簡編本字義解析。";
+      }
+
+      if (detailTips) {
+        detailTips.textContent = data.tip || `依教育部標準字體筆順練習，留意「${data.char}」字起筆與結構平衡。`;
+      }
+
+      if (detailWordsContainer) {
+        detailWordsContainer.innerHTML = '';
+        wordDetailPanel.classList.add('hidden');
+
+        const wordList = data.words || [
+          { word: `${data.char}字`, desc: `「${data.char}」字的日常相關詞彙與用法。` }
+        ];
+
+        wordList.forEach((item) => {
+          const wBtn = document.createElement('button');
+          wBtn.setAttribute('data-word', item.word);
+          wBtn.className = 'flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 transition text-xs font-medium';
+          wBtn.innerHTML = `<span>${item.word}</span><span class="text-xs text-teal-600">📖</span>`;
+          
+          wBtn.onclick = (e) => {
+            e.stopPropagation();
+            openWordDetail(item);
+          };
+          detailWordsContainer.appendChild(wBtn);
+        });
+
+        if (wordList.length > 0) {
+          openWordDetail(wordList[0]);
+        }
+      }
+
+      if (currentMode === 'hanzi') {
+        initHanziWriter(data.char);
+      } else {
+        initMoeWriter(data.char);
+      }
+    }
+
+    btnAnimate.onclick = () => {
+      if (!writerInstance) return;
+      isLooping = false;
+      isQuizActive = false;
+      btnLoopText.textContent = '循環播放';
+      writerInstance.cancelQuiz();
+      writerInstance.showCharacter();
+      updateStatus('writing', '播放筆順中', '仔細觀察筆順起筆、行筆與收筆位置～');
+      writerInstance.animateCharacter({
+        onComplete: function() {
+          updateStatus('ready', '播放完成', '觀看結束！可再次播放或開始手寫練習。');
+        }
+      });
+    };
+
+    btnLoop.onclick = () => {
+      if (!writerInstance) return;
+      if (!isLooping) {
+        isLooping = true;
+        isQuizActive = false;
+        btnLoopText.textContent = '停止循環';
+        writerInstance.cancelQuiz();
+        writerInstance.showCharacter();
+        writerInstance.loopCharacterAnimation();
+        updateStatus('writing', '循環示範中', '持續展示標準書寫筆順，點擊「停止循環」可暫停。');
+      } else {
+        isLooping = false;
+        btnLoopText.textContent = '循環播放';
+        writerInstance.pauseAnimation();
+        updateStatus('ready', '已停止示範', '可點擊手寫測驗開始親手在純田字格描紅！');
+      }
+    };
+
+    btnQuiz.onclick = () => {
+      if (!writerInstance) return;
+      isLooping = false;
+      btnLoopText.textContent = '循環播放';
+      isQuizActive = true;
+
+      const data = getCurrentCharData();
+      updateStatus('writing', '手寫測驗進行中', '請依標準筆順在純田字格描紅！寫錯兩次會提供貼心指引。', 0, 0);
+
+      writerInstance.quiz({
+        onMistake: function(strokeData) {
+          updateStatus('mistake', '筆順提醒', `筆畫方向或位置不對喔！還有 ${strokeData.strokesRemaining} 畫，加油！`, strokeData.strokeNum, strokeData.strokeNum + strokeData.strokesRemaining);
+        },
+        onCorrectStroke: function(strokeData) {
+          const current = strokeData.strokeNum + 1;
+          const total = strokeData.strokeNum + strokeData.strokesRemaining + 1;
+          updateStatus('writing', '寫得真棒！', `第 ${current} 筆正確，請繼續寫下一筆！`, current, total);
+        },
+        onComplete: function(summaryData) {
+          isQuizActive = false;
+          if (summaryData.totalMistakes === 0) {
+            updateStatus('success', '太厲害了！全對滿分！🎉', `零失誤一氣呵成！「${data.char}」字掌握得非常扎實！`);
+            speakText(`太棒了！「${data.char}」字書寫完全正確！`);
+          } else {
+            updateStatus('success', '恭喜完成練習！👏', `成功寫完「${data.char}」字！熟能生巧！`);
+            speakText(`恭喜完成「${data.char}」字的書寫練習！`);
+          }
+        }
+      });
+    };
+
+    btnReset.onclick = () => {
+      if (!writerInstance) return;
+      isLooping = false;
+      isQuizActive = false;
+      btnLoopText.textContent = '循環播放';
+      writerInstance.cancelQuiz();
+      writerInstance.showCharacter();
+      if (isShowOutline) {
+        writerInstance.showOutline();
+      } else {
+        writerInstance.hideOutline();
+      }
+      const data = getCurrentCharData();
+      updateStatus('ready', '田字格已清空', `已恢復「${data.char}」初始狀態。`);
+    };
+
+    btnToggleOutline.onclick = () => {
+      if (!writerInstance) return;
+      isShowOutline = !isShowOutline;
+      if (isShowOutline) {
+        writerInstance.showOutline();
+        textToggleOutline.textContent = '隱藏底字';
+      } else {
+        writerInstance.hideOutline();
+        textToggleOutline.textContent = '顯示底字';
+      }
+    };
+
+    document.querySelectorAll('.speed-btn').forEach(btn => {
+      btn.onclick = (e) => {
+        const speed = parseFloat(e.currentTarget.getAttribute('data-speed'));
+        currentSpeed = speed;
+        document.querySelectorAll('.speed-btn').forEach(b => {
+          b.className = 'speed-btn px-2 py-0.5 rounded-md text-xs font-medium border border-slate-200 hover:bg-slate-50 text-slate-600 transition';
+        });
+        e.currentTarget.className = 'speed-btn px-2 py-0.5 rounded-md text-xs font-medium bg-indigo-50 border border-indigo-300 text-indigo-800 transition';
+
+        const data = getCurrentCharData();
+        if (data && currentMode === 'hanzi') initHanziWriter(data.char);
+      };
+    });
+
+    btnPrevChar.onclick = () => {
+      const lesson = getCurrentLesson();
+      if (currentWordIndex > 0) {
+        currentWordIndex--;
+      } else {
+        currentWordIndex = lesson.characters.length - 1;
+      }
+      renderPills();
+      loadCurrentCharacter();
+    };
+
+    btnNextChar.onclick = () => {
+      const lesson = getCurrentLesson();
+      if (currentWordIndex < lesson.characters.length - 1) {
+        currentWordIndex++;
+      } else {
+        currentWordIndex = 0;
+      }
+      renderPills();
+      loadCurrentCharacter();
+    };
+
+    btnReadCharacter.onclick = () => {
+      const data = getCurrentCharData();
+      if (data) speakText(data.char);
+    };
+
+    charDisplayBadge.onclick = () => {
+      const data = getCurrentCharData();
+      if (data) speakText(data.char);
+    };
+
+    btnOpenMoeNewTab.onclick = () => {
+      const data = getCurrentCharData();
+      if (data) {
+        navigator.clipboard.writeText(data.char).then(() => {
+          alert(`已自動為您複製「${data.char}」字！即將前往教育部筆順網首頁，貼上即可快速對照。`);
+          window.open('https://stroke-order.learningweb.moe.edu.tw/', '_blank');
+        }).catch(() => {
+          window.open('https://stroke-order.learningweb.moe.edu.tw/', '_blank');
+        });
+      }
+    };
+
+    function startApp() {
+      try {
+        populateLessonDropdown();
+        renderPills();
+        loadCurrentCharacter();
+      } catch (err) {
+        console.error("Initialization error:", err);
+      }
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', startApp);
+    } else {
+      startApp();
+    }
+  </script>
+</body>
+</html>
